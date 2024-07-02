@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Iris Predictors{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+  <nav>
+    <h3>Models</h3>
+    <ul>
+      <li><a href="{{ url_for('iris.knn_classifier') }}">Nearest Neighbor</a>
+    </ul>
+  </nav>
+{% endblock %}

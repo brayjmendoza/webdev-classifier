@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Iris Predictor{% endblock %} - Nearest Neighbor</h1>
+{% endblock %}
+
+{% block content %}
+  <form method="post">
+    <label for="sepallen">Sepal Length</label>
+    <input name="sepallen" id="sepallen" 
+           value="{{ request.form['sepallen'] or '' }}" required>
+    <label for="sepalwid">Sepal Width</label>
+    <input name="sepalwid" id="sepalwid"
+           value="{{ request.form['sepalwid'] or '' }}" required>
+    <label for="petallen">Petal Length</label>
+    <input name="petallen" id="petallen"
+           value="{{ request.form['petallen'] or '' }}" required>
+    <label for="petalwid">Petal Width</label>
+    <input name="petalwid" id="petalwid"
+           value="{{ request.form['petalwid'] or '' }}" required>
+    <input type="submit" value="Predict!">
+  </form>
+
+  {% if prediction != None %}
+    <p>Iris Prediction: {{ prediction }}</p>
+    <button type="button" 
+            onclick="document.getElementById('incorrect').style.display='block'">
+        
+              This is incorrect!
+    </button>
+
+    <form method="post" id="incorrect" style="display: none">
+       <input name="species" placeholder="What is the correct species?">
+       <input type="submit" 
+              onclick="document.getElementById('feedback').style.display='block'"
+              value="Submit">
+
+       <p id="feedback" style="display: none">Thanks for the feedback!</p>
+
+    </form>
+  {% endif %}
+{% endblock %}

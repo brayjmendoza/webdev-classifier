@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{% block title %}{% endblock %}</title>
+  </head>
+  <body>
+    <nav>
+      <h1>Predictors</h1>
+      <ul>
+        <li><a href="{{ url_for('index') }}">Home</a>
+        <li><a href="{{ url_for('iris.iris') }}">Iris Predictors</a>
+      </ul>
+    </nav>
+    <section class="content">
+      <header>
+        {% block header %}{% endblock %}
+      </header>
+            
+        {% block content %}{% endblock %}
+
+    </section>
+  </body>
+</html>
