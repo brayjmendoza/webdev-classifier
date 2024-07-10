@@ -1,14 +1,82 @@
 {% extends 'base.html' %}
 
 {% block header %}
-  <h1>{% block title %}Iris Predictors{% endblock %}</h1>
+  <h1>{% block title %}Iris Predictors {% block subtitle %}{% endblock %}{% endblock %}</h1>
 {% endblock %}
 
 {% block content %}
+  <!-- Navigation -->
   <nav>
     <h3>Models</h3>
     <ul>
       <li><a href="{{ url_for('iris.knn_classifier') }}">Nearest Neighbor</a>
     </ul>
   </nav>
+
+  <!-- Classification Form -->
+  <form id="irisForm" method="post">
+    <label for="sepallen">Sepal Length</label>
+    <input name="sepallen" id="sepallen" 
+           value="{{ request.form['sepallen'] or '' }}" required>
+    <label for="sepalwid">Sepal Width</label>
+    <input name="sepalwid" id="sepalwid"
+           value="{{ request.form['sepalwid'] or '' }}" required>
+    <label for="petallen">Petal Length</label>
+    <input name="petallen" id="petallen"
+           value="{{ request.form['petallen'] or '' }}" required>
+    <label for="petalwid">Petal Width</label>
+    <input name="petalwid" id="petalwid"
+           value="{{ request.form['petalwid'] or '' }}" required>
+    <button type="submit">Predict!</button>
+  </form>
+
+  <!-- Corrections Form -->
+  <p id="prediction"></p>
+  <button type="button" id="incorrect" style="display: none"
+    onclick="document.getElementById('correction').style.display='block'">
+        
+        This is incorrect!
+  </button>
+
+  <form id="correction" method="post" style="display: none">
+    <p>What is the correct species?</p>
+    <select name="species" id="species">
+      <option value="setosa">setosa</option>
+      <option value="versicolor">versicolor</option>
+      <option value="virginica">virginica</option>
+      </select>
+    <button type="submit">Submit</button>
+  </form>
+
+  <p id="feedback"></p>
+
+  <script>
+  // Send correction if species prediction was wrong
+    document.getElementById('correction').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const correction = document.getElementById('species').value;
+            
+        fetch('incorrect', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ correction })
+       })
+       .then(response => {
+            if (response.ok) {
+                document.getElementById('feedback').innerText = 'Thanks for the feedback!';
+            } else {
+                // Handle non 200 responses
+                document.getElementById('feedback').innerText = 'An error occurred';
+            } 
+       })
+       .catch(error => {
+            console.error('Error: ', error);
+            document.getElementById('feedback').innerText = 'An error occurred';
+       })
+    });
+
+  </script>
+
+  {% block js %}{% endblock %}
+
 {% endblock %}
