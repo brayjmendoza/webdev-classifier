@@ -28,7 +28,14 @@ def init_db():
     """Initialize the database"""
     db = get_db()
 
-    with current_app.open_resource('schema.sql') as f:
+    with current_app.open_resource('database/schema.sql') as f:
+        db.executescript(f.read().decode('utf8'))
+
+def clear_iris():
+    """Clear exisiting iris table and recreate it"""
+    db = get_db()
+
+    with current_app.open_resource('database/sql/iris.sql') as f:
         db.executescript(f.read().decode('utf8'))
 
 @click.command('init-db')
@@ -36,6 +43,11 @@ def init_db_command():
     """Clear the existing data and create new tables"""
     init_db()
     click.echo('Initialized the database.')
+
+@click.command('clear-iris-db')
+def clear_iris_command():
+    clear_iris()
+    click.echo('Reset iris table.')
 
 def init_app(app):
     """
@@ -46,3 +58,4 @@ def init_app(app):
     """
     app.teardown_appcontext(close_db)
     app.cli.add_command(init_db_command)
+    app.cli.add_command(clear_iris_command)

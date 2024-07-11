@@ -22,7 +22,7 @@ def create_app(test_config = None):
         pass
     
     # Register database functions
-    from . import db
+    from predictor.database import db
     db.init_app(app)
     
     # Register model blueprint

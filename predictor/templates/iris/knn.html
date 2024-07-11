@@ -4,32 +4,13 @@
   <h1>Iris Predictor{% block subtitle %} - Nearest Neighbor{% endblock %}</h1>
 {% endblock %}
 
+{% block subcontent %}
+
+  {% include 'iris/irisForm.html' %}
+
+{% endblock %}
 {% block js %}
   <script>
-    // Send feature data to backend to make species prediction
-    document.getElementById('irisForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const sepallen = document.getElementById('sepallen').value;
-        const sepalwid = document.getElementById('sepalwid').value;
-        const petallen = document.getElementById('petallen').value;
-        const petalwid = document.getElementById('petalwid').value;
-            
-        fetch('knn/predict', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sepallen, sepalwid, petallen, petalwid })
-       })
-       .then(response => response.json())
-       .then(data => {
-            document.getElementById('prediction').innerText = `Iris Species: ${data["species"]}`;
-            document.getElementById('incorrect').style.display='block';
-       })
-       .catch(error => {
-            console.error('Error: ', error);
-            document.getElementById('feedback').innerText = 'An error occurred';
-       });
-    });
+    prediction('knn')
   </script>
-
-
 {% endblock %}

@@ -1,3 +1,4 @@
+-- Reset iris table
 DROP TABLE IF EXISTS iris;
 
 CREATE TABLE iris (
@@ -6,5 +7,5 @@ CREATE TABLE iris (
     sepalwid FLOAT NOT NULL,
     petallen FLOAT NOT NULL,
     petalwid FLOAT NOT NULL,
-    species FLOAT NOT NULL
-)
+    species INT NOT NULL
+);

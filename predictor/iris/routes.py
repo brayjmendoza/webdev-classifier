@@ -1,15 +1,12 @@
 from flask import (
-    Blueprint, render_template, request, jsonify
+    Blueprint, render_template, request, jsonify, session
 )
 
 from predictor.iris.models import load_knn_model
-# from predictor.db import knn_incorrect
+from predictor.database.db import get_db
 from numpy import asarray
 
-# from predictor.db import get_db
-
 iris_bp = Blueprint('iris', __name__)
-knn_model = load_knn_model()  # k nearest neighbors model from hw5
 
 @iris_bp.route('/')
 def iris():
@@ -21,12 +18,13 @@ def knn_classifier():
 
 @iris_bp.route('/knn/predict', methods=["POST"])
 def knn_predict():
+    knn_model = load_knn_model()  # k nearest neighbors model from hw5
+
     # index species
     SPECIES = ['setosa','versicolor','virginica']   # int to str
 
-    prediction = None
-
     data = request.json
+    session['iris_features'] = data   # store data in session in case of correction
 
     Features = asarray([data['sepallen'],
                 data['sepalwid'],
@@ -43,13 +41,23 @@ def knn_predict():
 
 @iris_bp.route('/incorrect', methods=["POST"])
 def knn_incorrect():
-    # index species
+    # Get species index
     SPECIES_INDEX = {'setosa':0,'versicolor':1,'virginica':2}  # str to int
-    
     correction = request.json
-    species = float(SPECIES_INDEX[correction['correction']])
+    species = SPECIES_INDEX[correction['correction']]
+    
+    # Get inputted features from session
+    iris_features = session['iris_features']
 
-    print(species)
-    # DATABASE STUFF
+    # Add correction to database
+    db = get_db()
+
+    db.execute(
+        "INSERT INTO iris (sepallen, sepalwid, petallen, petalwid, species)"
+        "VALUES (?, ?, ?, ?, ?)",
+        (iris_features['sepallen'], iris_features['sepalwid'], 
+         iris_features['petallen'], iris_features['petalwid'], species)
+    )
+    db.commit()
 
     return '', 204 # No Content response
