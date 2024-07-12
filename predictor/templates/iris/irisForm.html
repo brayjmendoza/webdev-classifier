@@ -43,9 +43,18 @@
 <p id="feedback"></p>
 <button id="tryAgain" type="button" style="display: none"
   onclick="document.getElementById('correction').style.display='block';
-            document.getElementById('tryAgain').style.display='none';
-            document.getElementById('feedback').innerText = '';">
+           document.getElementById('tryAgain').style.display='none';
+           document.getElementById('feedback').innerText = '';">
   
     Try Again
 
 </button>
+
+<!-- Retraining -->
+{% if not session['retrained'] %}
+  <button id="retrainButton" type="button">
+    Retrain with Corrections
+  </button>
+{% endif %}
+
+<p id="retrainStatus"></p> 

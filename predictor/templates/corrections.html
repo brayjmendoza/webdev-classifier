@@ -1,0 +1,19 @@
+<!-- List Corrections -->
+<div id="cTable">
+  {% if corrections %}
+    <h2 id ="cHeader">Corrections:</h2>
+  {% endif %}
+
+  {% for c in corrections %}
+
+    <p>Sepal Length: {{ c['sepallen'] }}</p>
+    <p>Sepal Width: {{ c['sepalwid'] }}</p>
+    <p>Petal Length: {{ c['petallen'] }}</p>
+    <p>Petal Width: {{ c['petalwid'] }}</p>
+    <p>Species: {{ index[c['species']] }}</p>
+
+    {% if not loop.last %}
+      <hr>
+    {% endif %}
+  {% endfor %}
+</div>

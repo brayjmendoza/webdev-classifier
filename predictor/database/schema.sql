@@ -6,5 +6,6 @@ CREATE TABLE iris (
     sepalwid FLOAT NOT NULL,
     petallen FLOAT NOT NULL,
     petalwid FLOAT NOT NULL,
-    species INT NOT NULL
+    species INT NOT NULL,
+    model VARCHAR(63) NOT NULL
 );

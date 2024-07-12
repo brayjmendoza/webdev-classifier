@@ -7,10 +7,13 @@
 {% block subcontent %}
 
   {% include 'iris/irisForm.html' %}
+  
+  {% include 'corrections.html' %}
 
 {% endblock %}
 {% block js %}
   <script>
     prediction('knn')
+    retrain('iris', 'knn')
   </script>
 {% endblock %}

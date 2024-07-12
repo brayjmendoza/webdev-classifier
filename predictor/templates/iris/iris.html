@@ -39,12 +39,14 @@
         })
         .then(response => response.json())
         .then(data => {
-              document.getElementById('prediction').innerText = `Iris Species: ${data["species"]}`;
-              document.getElementById('incorrect').style.display='block';
+            document.getElementById('prediction').innerText = `Iris Species: ${data["species"]}`;
+            document.getElementById('incorrect').style.display='block';
+            document.getElementById('retrainStatus').innerText=''
         })
         .catch(error => {
-              console.error('Error: ', error);
-              document.getElementById('feedback').innerText = 'An error occurred';
+            console.error('Error: ', error);
+            document.getElementById('prediction').innerText = 'An error occurred';
+            document.getElementById('retrainStatus').innerText=''
         });
       });
     }

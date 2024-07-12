@@ -25,7 +25,7 @@ def create_app(test_config = None):
     from predictor.database import db
     db.init_app(app)
     
-    # Register model blueprint
+    # Register classification blueprints
     from predictor.iris.routes import iris_bp
     app.register_blueprint(iris_bp, url_prefix='/iris')
 
