@@ -21,13 +21,17 @@ def create_app(test_config = None):
     except OSError:
         pass
     
-    # Register database functions
+    # Register database functions/commands
     from predictor.database import db
     db.init_app(app)
     
     # Register classification blueprints
     from predictor.iris.routes import iris_bp
     app.register_blueprint(iris_bp, url_prefix='/iris')
+
+    # Register additional utility commands
+    from . import commands
+    commands.register_commands(app)
 
     @app.route('/')
     def index():

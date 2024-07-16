@@ -10,8 +10,14 @@
   
   {% include 'corrections.html' %}
 
+  <h2>Default KNN Model</h2>
+  <img src="{{ url_for('static', filename='img/iris_knn_sepal.png') }}" style="width: 45%">
+  <img src="{{ url_for('static', filename='img/iris_knn_petal.png') }}" style="width: 45%">
+
+  {% include 'iris/irisRetrainPlots.html' %}
+
 {% endblock %}
-{% block js %}
+{% block subjs %}
   <script>
     prediction('knn')
     retrain('iris', 'knn')

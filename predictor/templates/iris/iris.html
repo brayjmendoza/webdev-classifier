@@ -14,44 +14,46 @@
   </nav>
 
   {% block subcontent %}{% endblock %}
+
+{% endblock %}
+{% block js %}
   <!-- General JavaScript-->
-  <script src="{{ url_for('static', filename='main.js') }}"></script> 
   <script>correction('iris')</script>
 
   <!-- Iris-Specific JavaScript-->
   <script>
-    function prediction(modelType) {
-      // Send feature data to backend to make a prediction
-      // modelType is the model to be used
-      let path = `${modelType}/predict`;
+  function prediction(modelType) {
+    // Send feature data to backend to make a prediction
+    // modelType is the model to be used
+    let path = `${modelType}/predict`;
 
-      document.getElementById('irisForm').addEventListener('submit', function(e) {
-          e.preventDefault();
-          const sepallen = document.getElementById('sepallen').value;
-          const sepalwid = document.getElementById('sepalwid').value;
-          const petallen = document.getElementById('petallen').value;
-          const petalwid = document.getElementById('petalwid').value;
-              
-          fetch(path, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ sepallen, sepalwid, petallen, petalwid })
-        })
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('prediction').innerText = `Iris Species: ${data["species"]}`;
-            document.getElementById('incorrect').style.display='block';
-            document.getElementById('retrainStatus').innerText=''
-        })
-        .catch(error => {
-            console.error('Error: ', error);
-            document.getElementById('prediction').innerText = 'An error occurred';
-            document.getElementById('retrainStatus').innerText=''
-        });
+    document.getElementById('irisForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const sepallen = document.getElementById('sepallen').value;
+        const sepalwid = document.getElementById('sepalwid').value;
+        const petallen = document.getElementById('petallen').value;
+        const petalwid = document.getElementById('petalwid').value;
+            
+        fetch(path, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sepallen, sepalwid, petallen, petalwid })
+      })
+      .then(response => response.json())
+      .then(data => {
+          document.getElementById('prediction').innerText = `Iris Species: ${data["species"]}`;
+          document.getElementById('incorrect').style.display='block';
+          document.getElementById('retrainStatus').innerText=''
+      })
+      .catch(error => {
+          console.error('Error: ', error);
+          document.getElementById('prediction').innerText = 'An error occurred';
+          document.getElementById('retrainStatus').innerText=''
       });
-    }
+    });
+  }
   </script>
 
-  {% block js %}{% endblock %}
+  {% block subjs %}{% endblock %}
 
 {% endblock %}

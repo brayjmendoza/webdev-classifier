@@ -40,7 +40,7 @@ function retrain(classType, model) {
      * model - the model to be retrained (e.g. knn, dtree)
      */ 
 
-    let path = `/${classType}/${model}/retrain`
+    let path = `/${classType}/${model}/retrain_and_visualize`
 
     console.log(path)
 
