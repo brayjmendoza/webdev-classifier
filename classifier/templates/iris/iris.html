@@ -1,16 +1,21 @@
 {% extends 'base.html' %}
 
 {% block header %}
-  <h1>{% block title %}Iris Classifiers {% block subtitle %}{% endblock %}{% endblock %}</h1>
+  <header class="classifier-header">
+    <h1 class="classifier">{% block title %}Iris Classifiers {% block subtitle %}{% endblock %}{% endblock %}</h1>
+    <button class="model-dropdown">
+      Models
+      <i class="fa fa-caret-down"></i>
+    </button>
+  </header>
 {% endblock %}
 
 {% block content %}
   <!-- Navigation -->
-  <nav>
-    <h3>Models</h3>
-    <ul>
-      <li><a href="{{ url_for('iris.knn_classifier') }}">Nearest Neighbor</a>
-    </ul>
+  <nav class="models-nav">
+    <div model="model-links">
+      <a href="{{ url_for('iris.knn_classifier') }}">Nearest Neighbor</a>
+    </div>
   </nav>
 
   {% block subcontent %}{% endblock %}
@@ -23,34 +28,44 @@
   <!-- Iris-Specific JavaScript-->
   <script>
   function prediction(modelType) {
-    // Send feature data to backend to make a prediction
-    // modelType is the model to be used
-    let path = `${modelType}/predict`;
+    /* Send feature data to backend to make a prediction
+     modelType is the model to be used */
 
-    document.getElementById('irisForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const sepallen = document.getElementById('sepallen').value;
-        const sepalwid = document.getElementById('sepalwid').value;
-        const petallen = document.getElementById('petallen').value;
-        const petalwid = document.getElementById('petalwid').value;
-            
-        fetch(path, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sepallen, sepalwid, petallen, petalwid })
-      })
-      .then(response => response.json())
-      .then(data => {
-          document.getElementById('prediction').innerText = `Iris Species: ${data["species"]}`;
-          document.getElementById('incorrect').style.display='block';
-          document.getElementById('retrainStatus').innerText='';
-      })
-      .catch(error => {
-          console.error('Error: ', error);
-          document.getElementById('prediction').innerText = 'An error occurred';
-          document.getElementById('retrainStatus').innerText='';
+      document.addEventListener('DOMContentLoaded', (event) => {
+          // Connect to the Socket.IO server
+          const socket = io();
+
+          // Handle the 'status' event from the server
+          socket.on('classify-status', function(data) {
+              document.getElementById('prediction').innerText = data.message;
+          });
+
+          let path = `${modelType}/predict`;
+          document.getElementById('irisForm').addEventListener('submit', function(e) {
+              e.preventDefault();
+              const sepallen = document.getElementById('sepallen').value;
+              const sepalwid = document.getElementById('sepalwid').value;
+              const petallen = document.getElementById('petallen').value;
+              const petalwid = document.getElementById('petalwid').value;
+                  
+              fetch(path, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ sepallen, sepalwid, petallen, petalwid })
+              })
+              .then(response => response.json())
+              .then(data => {
+                  document.getElementById('prediction').innerText = `Iris Species: ${data["species"]}`;
+                  document.getElementById('incorrect').style.display='block';
+                  document.getElementById('retrainStatus').innerText='';
+              })
+              .catch(error => {
+                  console.error('Error: ', error);
+                  document.getElementById('prediction').innerText = 'An error occurred';
+                  document.getElementById('retrainStatus').innerText='';
+              });
+          });
       });
-    });
   }
   </script>
 

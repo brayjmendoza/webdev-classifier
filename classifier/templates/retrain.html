@@ -4,11 +4,13 @@
      desired functionality, we need to store it in
      a separate page and manipulate it that way-->
 
-<button id="retrainButton" type="button">
-  Retrain with Corrections
-</button>
+<div class="retraining">
+  <button id="retrainButton" class ="retrain-button" type="button">
+    Retrain with Corrections
+  </button>
 
-<p id="retrainStatus"></p>
+  <p id="retrainStatus" class="retrain-status"></p>
+</div>
 
 {% if session['retrained'] or not corrections %}
   <!-- For initially loading the page -->

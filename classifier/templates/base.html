@@ -2,17 +2,19 @@
 <html>
   <head>
     <title>{% block title %}{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css')}}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css')}}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   </head>
   <body>
-    <header class="home">
-      <h1>Classifiers</h1>
+    <header class="head">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="menu-icon" id="menu-icon">
+        <g><path d="M21,6H3V5h18V6z M21,11H3v1h18V11z M21,17H3v1h18V17z" fill="white"></path></g>
+      </svg>
+      <h1 class="name">Classifiers</h1>
     </header>
-    <nav>
-      <ul>
-        <li><a href="{{ url_for('index') }}">Home</a>
-        <li><a href="{{ url_for('iris.iris') }}">Iris Classifiers</a>
-      </ul>
+    <nav class="nav-links" id="nav-links">
+      <a href="{{ url_for('index') }}" class="">Home</a>
+      <a href="{{ url_for('iris.iris') }}">Iris Classifiers</a>
     </nav>
     <section class="content">
       <header>
@@ -21,10 +23,12 @@
             
         {% block content %}{% endblock %}
 
+        <!-- Include Socket.IO client library -->
+        <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
         <script src="{{ url_for('static', filename='main.js') }}"></script>
-        
-        {% block js %}{% endblock %}
+        <script>
+          const menuIcon = document.getElementById('menu-icon');
+          const navLinks = document.getElementById('nav-links');
 
-    </section>
-  </body>
-</html>
+          menuIcon.addEventListener('click', () => {
+       

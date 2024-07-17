@@ -36,35 +36,41 @@ function retrain(classType, model) {
      * classType - the thing that is being predicted (e.g. iris species)
      * model - the model to be retrained (e.g. knn, dtree)
      */ 
+    
+    document.addEventListener('DOMContentLoaded', (event) => {
+        // Connect to the Socket.IO server
+        const socket = io();
 
-    let path = `/${classType}/${model}/retrain_and_visualize`
-
-    console.log(path)
-
-    document.getElementById('retrainButton').addEventListener('click', function() {
-        fetch(path, {
-            method: 'POST'
-        })
-        .then(response => response.text())
-        .then(data => {
+        // Handle the 'status' event from the server
+        socket.on('retraining-status', function(data) {
+            document.getElementById('retrainStatus').innerText = data.message;
+        });
+    
+        let path = `/${classType}/${model}/retrain_and_visualize`
+        document.getElementById('retrainButton').addEventListener('click', function() {
             document.getElementById('retrainButton').style.display = 'none';
-            document.getElementById('retrainStatus').innerText = "Success!";
-            document.getElementById('retrainPlots').innerHTML = data;
-            console.log(data);
+            fetch(path, {
+                method: 'POST'
+            })
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('retrainStatus').innerText = "Success!";
+                document.getElementById('retrainPlots').innerHTML = data;
 
-            // Prevent images from caching so they are properly updated in real time
-            const images = document.getElementById('retrainPlots').getElementsByTagName('img');
-            for (let i = 0; i < images.length; i++) {
-                const img = images[i];
-                const src = img.src.split('?')[0]; // Remove existing query parameters
+                // Prevent images from caching so they are properly updated in real time
+                const images = document.getElementById('retrainPlots').getElementsByTagName('img');
+                for (let i = 0; i < images.length; i++) {
+                    const img = images[i];
+                    const src = img.src.split('?')[0]; // Remove existing query parameters
 
-                // Use timestamp as query parameter for unique URL
-                img.src = src + '?t=' + new Date().getTime(); 
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            document.getElementById('retrainStatus').innerText = "An error occurred.";
+                    // Use timestamp as query parameter for unique URL
+                    img.src = src + '?t=' + new Date().getTime(); 
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('retrainStatus').innerText = "An error occurred.";
+            });
         });
     });
 }

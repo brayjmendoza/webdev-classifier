@@ -1,6 +1,10 @@
 import os
 
 from flask import Flask, render_template
+from flask_socketio import SocketIO
+
+
+socketio = SocketIO()
 
 def create_app(test_config = None):
     # create and configure app
@@ -20,6 +24,8 @@ def create_app(test_config = None):
         os.makedirs(app.instance_path)
     except OSError:
         pass
+
+    socketio.init_app(app)
     
     # Register database functions/commands
     from classifier.database import db

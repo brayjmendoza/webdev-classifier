@@ -1,9 +1,12 @@
 import os
-import threading
+from time import sleep
 
 from flask import (
-    Blueprint, render_template, request, jsonify, session, url_for, current_app)
+    Blueprint, render_template, request, jsonify, session, current_app)
+# from flask_socketio import emit
 
+from classifier.commands import clean_files
+from classifier import socketio
 from classifier.iris import model_loader
 from classifier.database.db import get_db
 from numpy import asarray, array, reshape, concatenate, arange, zeros
@@ -21,6 +24,9 @@ def iris():
 
 @iris_bp.route('/knn', methods=["GET"])
 def knn_classifier():
+
+    clean_files(classify='iris', model='knn')
+
     db = get_db()
     corrections = db.execute(
         "SELECT sepallen, sepalwid, petallen, petalwid, species "
@@ -41,10 +47,16 @@ def knn_classifier():
 
 @iris_bp.route('/knn/predict', methods=["POST"])
 def knn_predict():
-    print('loading model...')
+    # Load model
+    socketio.emit('classify-status', {'message': 'Loading model...'})
+    print('Loading model...')
+    sleep(0.1)
     knn_model = model_loader.load_knn_model()  # k nearest neighbors model from hw5
-    print('loaded!')
+    socketio.emit('classify-status', {'message': 'Loaded!'})
+    print('Loaded!')
 
+    # Make prediction
+    socketio.emit('classify-status', {'message': 'Classifying...'})
     data = request.json
     session['iris_features'] = data   # store data in session in case of correction
 
@@ -118,14 +130,18 @@ def knn_retrain(features, targets):
     
     
     # Train new model
-    print("Training...")
+    socketio.emit('retraining-status', {'message': 'Retraining model...'})
+    print("Retraining model...")
     new_knn_model = KNeighborsClassifier(n_neighbors=model_loader.BEST_K)
     new_knn_model.fit(features, targets)
+    socketio.emit('retraining-status', {'message': 'Trained!'})
     print("Trained!")
     
     # Save new model
-    print("Saving...")
+    socketio.emit('retraining-status', {'message': 'Saving retrained model...'})
+    print("Saving retrained model...")
     dump(new_knn_model, 'classifier/models/iris/knn_new.pkl')
+    socketio.emit('retraining-status', {'message': 'Saved!'})
     print("Saved!")
 
     return new_knn_model
@@ -134,6 +150,9 @@ def knn_retrain(features, targets):
 @iris_bp.route('/knn/retrain_and_visualize', methods=['POST'])
 def knn_retrain_and_visualize():
     session['retrained'] = True
+
+    socketio.emit('retraining-status', {'message': 'Obtaining data...'})
+    print('Obtaining data...')
 
     db = get_db()
     iris_data = load_iris()
@@ -162,20 +181,20 @@ def knn_retrain_and_visualize():
     all_features = concatenate((feature_data, new_features))
     all_targets = concatenate((target_data, new_targets))
 
-    print("Obtained all data...")
+    socketio.emit('retraining-status', {'message': 'Obtained all data!'})
+    print("Obtained all data!")
 
     new_model = knn_retrain(all_features, all_targets)
 
     # Create plots for visualization
     model_visualization(db, new_model)
 
-    print("Created plots!")
-
     return render_template('iris/irisRetrainPlots.html', model='knn')
 
 def model_visualization(db, model):
     """Create images to visualize retrained models"""
     
+    socketio.emit('retraining-status', {'message': 'Calculating averages...'})
     print("Calculating averages...")
     
     # Sums of feature values for the original iris dataset (rounded) 
@@ -235,6 +254,7 @@ def model_visualization(db, model):
     HORIZONT = arange(0,8,.1) # array of horizontal input values
     PLANE = zeros( (len(HORIZONT),len(VERTICAL)) ) # the output array
 
+    socketio.emit('retraining-status', {'message': 'Working on sepal plane...'})
     print("Working on sepal plane...")
 
     col = 0
@@ -276,33 +296,11 @@ def model_visualization(db, model):
     PETALLEN_AVG = (PETALLEN_DATA_TOTAL + PETALLEN_CORRS) / (IRIS_DATA_TOTAL + IRIS_CORR_TOTAL)
     PETALWID_AVG = (PETALWID_DATA_TOTAL + PETALWID_CORRS) / (IRIS_DATA_TOTAL + IRIS_CORR_TOTAL)
 
+    socketio.emit('retraining-status', {'message': 'Working on petal plane...'})
     print("Working on petal plane...")
     
     col = 0
     row = 0
     for sepalwid in VERTICAL: # for every petal length
         for sepallen in HORIZONT: # for every sepal length
-            Features = [ sepallen, sepalwid, PETALLEN_AVG, PETALWID_AVG ]
-            output = model.predict([Features])
-            PLANE[row,col] = int(round(output[0]))
-            row += 1
-        row = 0
-        col += 1
-
-    set(rc = {'figure.figsize':(12,8)})  # figure size!
-    petal = heatmap(PLANE, cbar_kws={'ticks': [0, 1, 2]})
-    petal.invert_yaxis() # to match our usual direction
-    petal.set(xlabel="Sepal Width (mm)", ylabel="Sepal Length (mm)")
-    petal.set_title(
-        f"Model Predictions with the Average Petal Length ({PETALLEN_AVG:.2f} cm) and Petal Width ({PETALWID_AVG:.2f} cm)")
-    petal.set_xticks(petal.get_xticks()[::4])
-    petal.set_yticks(petal.get_yticks()[::4])
-
-    # Modify color bar
-    cbar = petal.collections[0].colorbar # Get color bar from heatmap
-    cbar.set_label('Species', labelpad=-95)  # Set the label for the color bar
-    cbar.set_ticklabels(['setosa', 'versicolor', 'virginica'])  # Set the tick labels
-
-    # Save Plot
-    petal.get_figure().savefig('classifier/static/img/iris_knn_petal_new.png')
-    clf()
+            Features = [ sepallen, sepalwid, 

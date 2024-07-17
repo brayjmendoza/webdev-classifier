@@ -15,7 +15,7 @@ def clear_iris():
         db.executescript(f.read().decode('utf8'))
 
 
-def clean_files():
+def clean_files(classify = None, model = None):
     """
     Cleanup files that may have been created while running
 
@@ -23,22 +23,38 @@ def clean_files():
     """
 
     # Remove new models
-    for file in os.walk('classifier/models'):
+    if classify:
+        directory = f'classifier/models/{classify}'
+    else:
+        directory = 'classifier/models'
+
+    for file in os.walk(directory):
         if file[2] == []:
             continue
-        else:
-            prefix = file[0]
-            for i in range(len(file[2])):
+        
+        prefix = file[0]
+        for i in range(len(file[2])):
+            if model:
+                if model in file[2][i] and 'new' in file[2][i]:
+                    os.remove(f'{prefix}/{file[2][i]}')
+            else:
                 if 'new' in file[2][i]:
+                    print(f'{prefix}/{file[2][i]}')
                     os.remove(f'{prefix}/{file[2][i]}')
 
     # Remove plots for new models
     img_dir = list(os.walk('classifier/static/img'))
     img_prefix = img_dir[0][0] # Get directory path
     for file in img_dir[0][2]:
-        if 'new' in file:
-            os.remove(f'{img_prefix}/{file}')
-
+        if classify and model:
+            if classify in file and model in file and 'new' in file:
+                os.remove(f'{img_prefix}/{file}')
+        elif classify:
+            if classify in file and 'new' in file:
+                os.remove(f'{img_prefix}/{file}')
+        else:
+            if 'new' in file:
+                os.remove(f'{img_prefix}/{file}')
 
 @click.command('reset-iris')
 def reset_iris_command():
