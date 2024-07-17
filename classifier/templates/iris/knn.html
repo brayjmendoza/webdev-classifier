@@ -1,20 +1,26 @@
 {% extends 'iris/iris.html' %}
 
 {% block header %}
-  <h1>Iris Predictor{% block subtitle %} - Nearest Neighbor{% endblock %}</h1>
+  <h1>Iris Classifier{% block subtitle %} - Nearest Neighbor{% endblock %}</h1>
 {% endblock %}
 
 {% block subcontent %}
 
   {% include 'iris/irisForm.html' %}
   
-  {% include 'corrections.html' %}
+  {% include 'retrain.html' %}
+  
+  <div id="correctionsPage">
+    {% include 'corrections.html' %}
+  </div>
 
   <h2>Default KNN Model</h2>
   <img src="{{ url_for('static', filename='img/iris_knn_sepal.png') }}" style="width: 45%">
   <img src="{{ url_for('static', filename='img/iris_knn_petal.png') }}" style="width: 45%">
 
-  {% include 'iris/irisRetrainPlots.html' %}
+  <div id="retrainPlots">
+    {% include 'iris/irisRetrainPlots.html' %}
+  </div>
 
 {% endblock %}
 {% block subjs %}

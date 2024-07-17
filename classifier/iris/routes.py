@@ -1,9 +1,11 @@
 import os
+import threading
 
-from flask import Blueprint, render_template, request, jsonify, session, url_for
+from flask import (
+    Blueprint, render_template, request, jsonify, session, url_for, current_app)
 
-from predictor.iris import model_loader
-from predictor.database.db import get_db
+from classifier.iris import model_loader
+from classifier.database.db import get_db
 from numpy import asarray, array, reshape, concatenate, arange, zeros
 from sklearn.datasets import load_iris
 
@@ -27,7 +29,7 @@ def knn_classifier():
     ).fetchall()
 
     # Keep track if the model can be retrained or not
-    if os.path.exists('predictor/models/iris/knn_new.pkl'):
+    if os.path.exists('classifier/models/iris/knn_new.pkl'):
         session['retrained'] = True
     else:
         session['retrained'] = False
@@ -123,7 +125,7 @@ def knn_retrain(features, targets):
     
     # Save new model
     print("Saving...")
-    dump(new_knn_model, 'predictor/models/iris/knn_new.pkl')
+    dump(new_knn_model, 'classifier/models/iris/knn_new.pkl')
     print("Saved!")
 
     return new_knn_model
@@ -165,37 +167,40 @@ def knn_retrain_and_visualize():
     new_model = knn_retrain(all_features, all_targets)
 
     # Create plots for visualization
-    
     model_visualization(db, new_model)
+
+    print("Created plots!")
 
     return render_template('iris/irisRetrainPlots.html', model='knn')
 
 def model_visualization(db, model):
     """Create images to visualize retrained models"""
     
-    # Average feature values for the original iris dataset (rounded) 
-    SEPALLEN_DATA_AVG = 5.86
-    SEPALWID_DATA_AVG = 3.05
-    PETALLEN_DATA_AVG = 7.90
-    PETALWID_DATA_AVG = 7.90
+    print("Calculating averages...")
+    
+    # Sums of feature values for the original iris dataset (rounded) 
+    SEPALLEN_DATA_TOTAL = 876.5
+    SEPALWID_DATA_TOTAL = 458.6
+    PETALLEN_DATA_TOTAL = 563.7
+    PETALWID_DATA_TOTAL = 458.6
     IRIS_DATA_TOTAL = 150  # number of irises in the iris dataset
 
     # Average feature values for corrections
-    SEPALLEN_CORR_AVG = db.execute(
-        "SELECT AVG(sepallen) FROM iris "
+    SEPALLEN_CORRS = db.execute(
+        "SELECT SUM(sepallen) FROM iris "
         "WHERE model LIKE ?", ('knn', )
     ).fetchone()
 
-    SEPALWID_CORR_AVG = db.execute(
-        "SELECT AVG(sepalwid) FROM iris "
+    SEPALWID_CORRS = db.execute(
+        "SELECT SUM(sepalwid) FROM iris "
         "WHERE model LIKE ?", ('knn', )
     ).fetchone()
-    PETALLEN_CORR_AVG = db.execute(
-        "SELECT AVG(petallen) FROM iris "
+    PETALLEN_CORRS = db.execute(
+        "SELECT SUM(petallen) FROM iris "
         "WHERE model LIKE ?", ('knn', )
     ).fetchone()
-    PETALWID_CORR_AVG = db.execute(
-        "SELECT AVG(petalwid) FROM iris "
+    PETALWID_CORRS = db.execute(
+        "SELECT SUM(petalwid) FROM iris "
         "WHERE model LIKE ?", ('knn', )
     ).fetchone()
     IRIS_CORR_TOTAL = db.execute(
@@ -204,31 +209,38 @@ def model_visualization(db, model):
     ).fetchone()
 
     # Convert types
-    SEPALLEN_CORR_AVG = float(SEPALLEN_CORR_AVG[0])
-    SEPALWID_CORR_AVG = float(SEPALWID_CORR_AVG[0])
-    PETALLEN_CORR_AVG = float(PETALLEN_CORR_AVG[0])
-    PETALWID_CORR_AVG = float(PETALWID_CORR_AVG[0])
+    SEPALLEN_CORRS = float(SEPALLEN_CORRS[0])
+    SEPALWID_CORRS = float(SEPALWID_CORRS[0])
+    PETALLEN_CORRS = float(PETALLEN_CORRS[0])
+    PETALWID_CORRS = float(PETALWID_CORRS[0])
     IRIS_CORR_TOTAL = int(IRIS_CORR_TOTAL[0])
 
     ## We can only plot 2 dimensions at a time!
     from seaborn import set, heatmap
+    from matplotlib import use
+    from matplotlib.pyplot import clf
+
+    # Select matplotlib backend to allow for plot creation
+    use('agg')
 
     ##################
     ## Sepal Plane
     ##################
     
     # Get averages including corrections
-    SEPALLEN_AVG = (SEPALLEN_DATA_AVG + SEPALLEN_CORR_AVG) / (IRIS_DATA_TOTAL + IRIS_CORR_TOTAL)
-    SEPALWID_AVG = (SEPALWID_DATA_AVG + SEPALWID_CORR_AVG) / (IRIS_DATA_TOTAL + IRIS_CORR_TOTAL)
+    SEPALLEN_AVG = (SEPALLEN_DATA_TOTAL + SEPALLEN_CORRS) / (IRIS_DATA_TOTAL + IRIS_CORR_TOTAL)
+    SEPALWID_AVG = (SEPALWID_DATA_TOTAL + SEPALWID_CORRS) / (IRIS_DATA_TOTAL + IRIS_CORR_TOTAL)
 
     VERTICAL = arange(0,8,.1) # array of vertical input values
     HORIZONT = arange(0,8,.1) # array of horizontal input values
     PLANE = zeros( (len(HORIZONT),len(VERTICAL)) ) # the output array
 
+    print("Working on sepal plane...")
+
     col = 0
     row = 0
-    for petalwid in VERTICAL: # for every sepal length
-        for petallen in HORIZONT: # for every sepal width
+    for petalwid in VERTICAL: # for every petal width
+        for petallen in HORIZONT: # for every petal length
             Features = [ SEPALLEN_AVG, SEPALWID_AVG, petallen, petalwid ]
             output = model.predict([Features])
             PLANE[row,col] = int(round(output[0]))
@@ -236,58 +248,61 @@ def model_visualization(db, model):
         row = 0
         col += 1
 
-    # Create heatmap
     set(rc = {'figure.figsize':(12,8)})  # figure size!
-    ax = heatmap(PLANE, cbar_kws={'ticks': [0, 1, 2]})
-    ax.invert_yaxis() # to match our usual direction
-    ax.set(xlabel="Petal Width (mm)", ylabel="Petal Length (mm)")
-    ax.set_title(
+    sepal = heatmap(PLANE, cbar_kws={'ticks': [0, 1, 2]})
+    sepal.invert_yaxis() # to match our usual direction
+    sepal.set(xlabel="Petal Width (mm)", ylabel="Petal Length (mm)")
+    sepal.set_title(
         f"Model Predictions with the Average Sepal Length ({SEPALLEN_AVG:.2f} cm) and Sepal Width ({SEPALWID_AVG:.2f} cm)")
-    ax.set_xticks(ax.get_xticks()[::4])
-    ax.set_yticks(ax.get_yticks()[::4])
+    sepal.set_xticks(sepal.get_xticks()[::4])
+    sepal.set_yticks(sepal.get_yticks()[::4])
 
     # Modify color bar
-    cbar = ax.collections[0].colorbar # Get color bar from heatmap
+    cbar = sepal.collections[0].colorbar # Get color bar from heatmap
     cbar.set_label('Species', labelpad=-95)  # Set the label for the color bar
     cbar.set_ticklabels(['setosa', 'versicolor', 'virginica'])  # Set the tick labels
 
     # Save Plot
-    ax.get_figure().savefig(url_for('static', filename='iris_knn_petal_new'))
+    sepal.get_figure().savefig('classifier/static/img/iris_knn_sepal_new.png')
+    
+    clf() # clear figure to create next plot
 
 
     ##################
     ## Petal Plane
     ##################
-    
-    # Get averages including corrections
-    PETALLEN_AVG = (PETALLEN_DATA_AVG + PETALLEN_CORR_AVG) / (IRIS_DATA_TOTAL + IRIS_CORR_TOTAL)
-    PETALWID_AVG = (PETALWID_DATA_AVG + PETALWID_CORR_AVG) / (IRIS_DATA_TOTAL + IRIS_CORR_TOTAL)
 
+    # Get averages including corrections
+    PETALLEN_AVG = (PETALLEN_DATA_TOTAL + PETALLEN_CORRS) / (IRIS_DATA_TOTAL + IRIS_CORR_TOTAL)
+    PETALWID_AVG = (PETALWID_DATA_TOTAL + PETALWID_CORRS) / (IRIS_DATA_TOTAL + IRIS_CORR_TOTAL)
+
+    print("Working on petal plane...")
+    
     col = 0
     row = 0
-    for sepalwid in VERTICAL: # for every sepal length
-        for sepallen in HORIZONT: # for every sepal width
-            Features = [ sepalwid, sepallen, PETALLEN_AVG, PETALWID_AVG ]
+    for sepalwid in VERTICAL: # for every petal length
+        for sepallen in HORIZONT: # for every sepal length
+            Features = [ sepallen, sepalwid, PETALLEN_AVG, PETALWID_AVG ]
             output = model.predict([Features])
             PLANE[row,col] = int(round(output[0]))
             row += 1
         row = 0
         col += 1
 
-    # Create heatmap
     set(rc = {'figure.figsize':(12,8)})  # figure size!
-    ax = heatmap(PLANE, cbar_kws={'ticks': [0, 1, 2]})
-    ax.invert_yaxis() # to match our usual direction
-    ax.set(xlabel="Petal Width (mm)", ylabel="Petal Length (mm)")
-    ax.set_title(
-        f"Model Predictions with the Average Sepal Length ({PETALLEN_AVG:.2f} cm) and Sepal Width ({PETALWID_AVG:.2f} cm)")
-    ax.set_xticks(ax.get_xticks()[::4])
-    ax.set_yticks(ax.get_yticks()[::4])
+    petal = heatmap(PLANE, cbar_kws={'ticks': [0, 1, 2]})
+    petal.invert_yaxis() # to match our usual direction
+    petal.set(xlabel="Sepal Width (mm)", ylabel="Sepal Length (mm)")
+    petal.set_title(
+        f"Model Predictions with the Average Petal Length ({PETALLEN_AVG:.2f} cm) and Petal Width ({PETALWID_AVG:.2f} cm)")
+    petal.set_xticks(petal.get_xticks()[::4])
+    petal.set_yticks(petal.get_yticks()[::4])
 
     # Modify color bar
-    cbar = ax.collections[0].colorbar # Get color bar from heatmap
+    cbar = petal.collections[0].colorbar # Get color bar from heatmap
     cbar.set_label('Species', labelpad=-95)  # Set the label for the color bar
     cbar.set_ticklabels(['setosa', 'versicolor', 'virginica'])  # Set the tick labels
 
     # Save Plot
-    ax.get_figure().savefig(url_for('static', filename='img/iris_knn_petal_new'))
+    petal.get_figure().savefig('classifier/static/img/iris_knn_petal_new.png')
+    clf()

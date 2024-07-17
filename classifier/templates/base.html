@@ -5,11 +5,13 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css')}}">
   </head>
   <body>
+    <header class="home">
+      <h1>Classifiers</h1>
+    </header>
     <nav>
-      <h1>Predictors</h1>
       <ul>
         <li><a href="{{ url_for('index') }}">Home</a>
-        <li><a href="{{ url_for('iris.iris') }}">Iris Predictors</a>
+        <li><a href="{{ url_for('iris.iris') }}">Iris Classifiers</a>
       </ul>
     </nav>
     <section class="content">

@@ -4,5 +4,7 @@ __pycache__/
 
 .DS_Store
 
+*new*
+
 test.ipynb
 initial_models.ipynb

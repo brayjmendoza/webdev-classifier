@@ -17,11 +17,8 @@ function correction(classType) {
         .then(data => {
             document.getElementById('correction').style.display='none';
             document.getElementById('feedback').innerText = 'Thanks for the feedback!';
-            document.getElementById('cTable').innerHTML = data;
-            document.addEventListener("DOMContentLoaded", function() {
-                document.getElementById('retrainButton').style.display = 'block';
-            });
-            
+            document.getElementById('correctionsPage').innerHTML = data;
+            document.getElementById('retrainButton').style.display = 'block';  
         })
         .catch(error => {
             console.error('Error: ', error);
@@ -48,14 +45,22 @@ function retrain(classType, model) {
         fetch(path, {
             method: 'POST'
         })
-        .then(response => {
+        .then(response => response.text())
+        .then(data => {
             document.getElementById('retrainButton').style.display = 'none';
-            if(response.ok) {
-                document.getElementById('retrainStatus').innerText = "Success!";
-            } else {
-                document.getElementById('retrainStatus').innerText = "An error occurred.";
+            document.getElementById('retrainStatus').innerText = "Success!";
+            document.getElementById('retrainPlots').innerHTML = data;
+            console.log(data);
+
+            // Prevent images from caching so they are properly updated in real time
+            const images = document.getElementById('retrainPlots').getElementsByTagName('img');
+            for (let i = 0; i < images.length; i++) {
+                const img = images[i];
+                const src = img.src.split('?')[0]; // Remove existing query parameters
+
+                // Use timestamp as query parameter for unique URL
+                img.src = src + '?t=' + new Date().getTime(); 
             }
-            
         })
         .catch(error => {
             console.error('Error:', error);

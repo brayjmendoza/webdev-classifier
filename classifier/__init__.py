@@ -7,7 +7,7 @@ def create_app(test_config = None):
     app = Flask(__name__, instance_relative_config = True)
     app.config.from_mapping(
         SECRET_KEY = 'dev',
-        DATABASE = os.path.join(app.instance_path, 'predictor.sqlite')
+        DATABASE = os.path.join(app.instance_path, 'classifier.sqlite')
     )
 
     if test_config is None:
@@ -22,11 +22,11 @@ def create_app(test_config = None):
         pass
     
     # Register database functions/commands
-    from predictor.database import db
+    from classifier.database import db
     db.init_app(app)
     
     # Register classification blueprints
-    from predictor.iris.routes import iris_bp
+    from classifier.iris.routes import iris_bp
     app.register_blueprint(iris_bp, url_prefix='/iris')
 
     # Register additional utility commands
