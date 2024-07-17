@@ -2,7 +2,7 @@ import click
 import os
 
 from flask import current_app
-from classifier.database.db import get_db
+from classifier.database.db import get_db, init_db
 
 ########################
 ## DATABASE FUNCTIONS
@@ -69,7 +69,7 @@ def reset_app_command():
     app has never been used before
     """
     clean_files()
-    clear_iris()
+    init_db()
 
     click.echo('Reset app.')
 
