@@ -31,4 +31,13 @@
           const navLinks = document.getElementById('nav-links');
 
           menuIcon.addEventListener('click', () => {
-       
+            // toggles active class on nav-links, so we can target it with .nav-links.active
+            navLinks.classList.toggle('active');
+          })
+        </script>
+        
+        {% block js %}{% endblock %}
+
+    </section>
+  </body>
+</html>

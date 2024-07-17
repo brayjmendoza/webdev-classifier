@@ -303,4 +303,31 @@ def model_visualization(db, model):
     row = 0
     for sepalwid in VERTICAL: # for every petal length
         for sepallen in HORIZONT: # for every sepal length
-            Features = [ sepallen, sepalwid, 
+            Features = [ sepallen, sepalwid, PETALLEN_AVG, PETALWID_AVG ]
+            output = model.predict([Features])
+            PLANE[row,col] = int(round(output[0]))
+            row += 1
+        row = 0
+        col += 1
+
+    set(rc = {'figure.figsize':(12,8)})  # figure size!
+    petal = heatmap(PLANE, cbar_kws={'ticks': [0, 1, 2]})
+    petal.invert_yaxis() # to match our usual direction
+    petal.set(xlabel="Sepal Width (mm)", ylabel="Sepal Length (mm)")
+    petal.set_title(
+        f"Model Predictions with the Average Petal Length ({PETALLEN_AVG:.2f} cm) and Petal Width ({PETALWID_AVG:.2f} cm)")
+    petal.set_xticks(petal.get_xticks()[::4])
+    petal.set_yticks(petal.get_yticks()[::4])
+
+    # Modify color bar
+    cbar = petal.collections[0].colorbar # Get color bar from heatmap
+    cbar.set_label('Species', labelpad=-95)  # Set the label for the color bar
+    cbar.set_ticklabels(['setosa', 'versicolor', 'virginica'])  # Set the tick labels
+
+    # Save Plot
+    petal.get_figure().savefig('classifier/static/img/iris_knn_petal_new.png')
+    clf()
+
+    ### NOTE: Look into using BytesIO and base64 for sending heatmaps to server
+    socketio.emit('retraining-status', {'message': 'Created plots!'})
+    print('Created plots!')
