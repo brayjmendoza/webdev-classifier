@@ -58,7 +58,8 @@ select {
 }
 
 /* CLASSIFIER HEADER */
-.classifier-header {
+.classifier-subheader {
+    position: relative;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -67,9 +68,43 @@ select {
 }
 
 /* MODEL NAVIGATION */
-.model-dropdown {
+.model-nav {
+    position: relative;
+}
+
+.model-dropdown-btn {
     font-size: 1.5em;
-    margin: 20px;
+    border: none;
+    background-color: white;
+}
+
+.model-links {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    box-shadow: 1px 5px 16px rgba(0,0,0,0.3);
+    z-index: 2;
+
+    left: -50%;
+    right: 0px;
+    padding: 8px;
+}
+
+.model-links a {
+    display: block;
+    text-decoration: none;
+    text-align: center;
+    color: rgb(0, 94, 255);
+    padding-top: 3px;
+    padding-bottom: 3px;
+}
+
+.model-links a:hover {
+    text-decoration: underline;
+}
+
+.model-nav:hover .model-links {
+    display: block;
 }
 
 /* CLASSIFICATION FORM */

@@ -1,0 +1,32 @@
+{% extends 'iris/iris.html' %}
+
+{% block subtitle %}
+  - Decision Tree
+{% endblock %}
+
+{% block subcontent %}
+
+  {% include 'iris/irisForm.html' %}
+
+  {% include 'retrain.html' %}
+  
+  <div id="correctionsPage" class="corrections-page">
+    {% include 'corrections.html' %}
+  </div>
+
+  <div id="retrainPlots">
+    {% include 'iris/irisRetrainPlots.html' %}
+  </div>
+
+  <!--Need to change-->
+  <h2>Default KNN Model</h2>
+  <img src="{{ url_for('static', filename='img/iris_knn_sepal.png') }}" style="width: 45%">
+  <img src="{{ url_for('static', filename='img/iris_knn_petal.png') }}" style="width: 45%">
+
+{% endblock %}
+{% block subjs %}
+  <script>
+    prediction('dtree')
+    retrain('iris', 'dtree')
+  </script>
+{% endblock %}

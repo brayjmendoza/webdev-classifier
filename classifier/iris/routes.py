@@ -191,6 +191,28 @@ def knn_retrain_and_visualize():
 
     return render_template('iris/irisRetrainPlots.html', model='knn')
 
+@iris_bp.route('/dtree', methods=['GET'])
+def dtree_classifier():
+    clean_files(classify='iris', model='dtree')
+
+    db = get_db()
+    corrections = db.execute(
+        "SELECT sepallen, sepalwid, petallen, petalwid, species "
+        "FROM iris "
+        "WHERE model LIKE 'dtree'"
+    ).fetchall()
+
+    # Keep track if the model can be retrained or not
+    if os.path.exists('classifier/models/iris/dtree_new.pkl'):
+        session['retrained'] = True
+    else:
+        session['retrained'] = False
+
+    return render_template('iris/dtree.html', 
+                           corrections=corrections, 
+                           index=SPECIES,
+                           model='dtree')
+
 def model_visualization(db, model):
     """Create images to visualize retrained models"""
     

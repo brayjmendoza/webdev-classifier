@@ -1,23 +1,25 @@
 {% extends 'base.html' %}
 
 {% block header %}
-  <header class="classifier-header">
+  <div class="classifier-subheader">
     <h1 class="classifier">{% block title %}Iris Classifiers {% block subtitle %}{% endblock %}{% endblock %}</h1>
-    <button class="model-dropdown">
-      Models
-      <i class="fa fa-caret-down"></i>
-    </button>
-  </header>
+    
+    <!-- Navigation -->
+    <div class="model-nav">
+      <button class="model-dropdown-btn">
+        Models
+        <i class="fa fa-caret-down"></i>
+      </button>
+      <div class="model-links">
+        <a href="{{ url_for('iris.knn_classifier') }}">Nearest Neighbor</a>
+        <a href="{{ url_for('iris.dtree_classifier') }}">Decision Tree</a>
+      </div>
+    </div>
+  </div>
 {% endblock %}
 
 {% block content %}
-  <!-- Navigation -->
-  <nav class="models-nav">
-    <div model="model-links">
-      <a href="{{ url_for('iris.knn_classifier') }}">Nearest Neighbor</a>
-    </div>
-  </nav>
-
+  
   {% block subcontent %}{% endblock %}
 
 {% endblock %}
