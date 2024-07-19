@@ -1,79 +1,83 @@
 <!-- Classification Form -->
-<div class="classification-form">
+ <div class="classify-and-plots">
+  <div class="classification-container">
 
-  <h3 class="classify-form-header"> Enter Iris Features: </h4>
+    <h3 class="classify-form-header"> Enter Iris Features: </h3>
 
-  <form id="irisForm" method="post">
-    <div class="classify-form-element">
-      <label for="sepallen">Sepal Length:</label>
-      <input name="sepallen" id="sepallen" 
-              value="{{ request.form['sepallen'] or '' }}" required>
-    </div>
-    <div class="classify-form-element">
-      <label for="sepalwid">Sepal Width:</label>
-      <input name="sepalwid" id="sepalwid"
-              value="{{ request.form['sepalwid'] or '' }}" required>
-    </div>
-    <div class="classify-form-element">
-      <label for="petallen">Petal Length:</label>
-      <input name="petallen" id="petallen"
-              value="{{ request.form['petallen'] or '' }}" required>
-    </div>
-    <div class="classify-form-element">
-      <label for="petalwid">Petal Width:</label>
-      <input name="petalwid" id="petalwid"
-              value="{{ request.form['petalwid'] or '' }}" required>
-    </div>
-    <div class="classify-form-button">
-      <button type="submit"
-              onclick="document.getElementById('correction').style.display = 'none';
-                        document.getElementById('feedback').innerText = '';">
-                        
-                        Predict!
+    <form id="irisForm" method="post" class="classification-form">
+      <div class="classify-form-element">
+        <label for="sepallen">Sepal Length:</label>
+        <input name="sepallen" id="sepallen" 
+                value="{{ request.form['sepallen'] or '' }}" required>
+      </div>
+      <div class="classify-form-element">
+        <label for="sepalwid">Sepal Width:</label>
+        <input name="sepalwid" id="sepalwid"
+                value="{{ request.form['sepalwid'] or '' }}" required>
+      </div>
+      <div class="classify-form-element">
+        <label for="petallen">Petal Length:</label>
+        <input name="petallen" id="petallen"
+                value="{{ request.form['petallen'] or '' }}" required>
+      </div>
+      <div class="classify-form-element">
+        <label for="petalwid">Petal Width:</label>
+        <input name="petalwid" id="petalwid"
+                value="{{ request.form['petalwid'] or '' }}" required>
+      </div>
+      <div class="classify-form-button">
+        <button type="submit"
+                onclick="document.getElementById('correction').style.display = 'none';
+                          document.getElementById('feedback').innerText = '';">
+                          
+                          Predict!
+        </button>
+      </div>
+    </form>
+
+    <p id="prediction" class="classify-result"></p>
+
+    <!-- Corrections -->
+    <div class="correcting">
+      <button type="button" id="incorrect" style="display: none" class="incorrect-button"
+        onclick="document.getElementById('correction').style.display='block';
+                  document.getElementById('incorrect').style.display='none';">
+            
+              This is incorrect!
+
+      </button>
+
+      <div class="correcting-form">
+        <form id="correction" method="post" style="display: none">
+
+          <p class="correcting-form-header">What is the correct species?</p>
+          
+          <div class="correcting-form-content">
+            <select name="species" id="species" class="correcting-dropdown">
+              <option value="setosa">setosa</option>
+              <option value="versicolor">versicolor</option>
+              <option value="virginica">virginica</option>
+            </select>
+
+            <button type="submit" class="correcting-submit">Submit</button>
+          </div>
+        </form>
+      </div>
+
+      <p id="feedback" class="correcting-feedback"></p>
+      <button id="tryAgain" type="button" style="display: none"
+        onclick="document.getElementById('correction').style.display='block';
+                document.getElementById('tryAgain').style.display='none';
+                document.getElementById('feedback').innerText = '';">
+        
+          Try Again
+
       </button>
     </div>
-  </form>
-
-  <p id="prediction" class="classify-result"></p>
-
+  </div>
+  <div class="classify-plot-container" id="classifyPlotContainer">
+    {% include 'iris/irisInstancePlots.html' %}
+  </div>
 </div>
 
 <br>
-
-<!-- Corrections -->
-<div class="correcting">
-  <button type="button" id="incorrect" style="display: none" class="incorrect-button"
-    onclick="document.getElementById('correction').style.display='block';
-              document.getElementById('incorrect').style.display='none';">
-        
-          This is incorrect!
-
-  </button>
-
-  <div class="correcting-form">
-    <form id="correction" method="post" style="display: none">
-
-      <p class="correcting-form-header">What is the correct species?</p>
-      
-      <div class="correcting-form-content">
-        <select name="species" id="species" class="correcting-dropdown">
-          <option value="setosa">setosa</option>
-          <option value="versicolor">versicolor</option>
-          <option value="virginica">virginica</option>
-        </select>
-
-        <button type="submit" class="correcting-submit">Submit</button>
-      </div>
-    </form>
-  </div>
-
-  <p id="feedback" class="correcting-feedback"></p>
-  <button id="tryAgain" type="button" style="display: none"
-    onclick="document.getElementById('correction').style.display='block';
-            document.getElementById('tryAgain').style.display='none';
-            document.getElementById('feedback').innerText = '';">
-    
-      Try Again
-
-  </button>
-</div>

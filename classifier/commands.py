@@ -39,7 +39,6 @@ def clean_files(classify = None, model = None):
                     os.remove(f'{prefix}/{file[2][i]}')
             else:
                 if 'new' in file[2][i]:
-                    print(f'{prefix}/{file[2][i]}')
                     os.remove(f'{prefix}/{file[2][i]}')
 
     # Remove plots for new models

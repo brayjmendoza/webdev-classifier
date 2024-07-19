@@ -9,7 +9,7 @@ from classifier.commands import clean_files
 from classifier import socketio
 from classifier.iris import model_loader
 from classifier.database.db import get_db
-from numpy import asarray, array, reshape, concatenate, arange, zeros
+from numpy import asarray, array, reshape, concatenate, arange, zeros, size
 from sklearn.datasets import load_iris
 
 iris_bp = Blueprint('iris', __name__)
@@ -70,7 +70,10 @@ def knn_predict():
     prediction = int(round(prediction[0]))  # unpack the extra brackets
     prediction = SPECIES[prediction]  # change to string
     
-    return jsonify({"species": prediction})
+    if 'included':
+       model_visualization(get_db(), knn_model, Features)
+
+    return jsonify({"species": prediction, "images": render_template('iris/irisInstancePlots.html')})
 
 
 @iris_bp.route('/incorrect', methods=["POST"])
@@ -213,9 +216,135 @@ def dtree_classifier():
                            index=SPECIES,
                            model='dtree')
 
-def model_visualization(db, model):
+def model_visualization(db, model, features = None):
     """Create images to visualize retrained models"""
     
+    if features is not None:
+        plane_sepallen = features[0]
+        plane_sepalwid = features[1]
+        plane_petallen = features[2] 
+        plane_petalwid = features[3]
+    else:
+        plane_sepallen, plane_sepalwid, plane_petallen, plane_petalwid = get_averages(db, model)
+
+    ## We can only plot 2 dimensions at a time!
+    from seaborn import set, heatmap, text
+    from matplotlib import use
+    from matplotlib.pyplot import clf
+    from matplotlib.patches import Rectangle
+
+
+    # Select matplotlib backend to allow for plot creation
+    use('agg')
+
+    ##################
+    ## Sepal Plane
+    ##################
+
+    VERTICAL = arange(0,8,.1) # array of vertical input values
+    HORIZONT = arange(0,8,.1) # array of horizontal input values
+    PLANE = zeros( (len(HORIZONT),len(VERTICAL)) ) # the output array
+
+    socketio.emit('retraining-status', {'message': 'Working on sepal plane...'})
+    print("Working on sepal plane...")
+
+    col = 0
+    row = 0
+    for petalwid in VERTICAL: # for every petal width
+        for petallen in HORIZONT: # for every petal length
+            Features = [ plane_sepallen, plane_sepalwid, petallen, petalwid ]
+            output = model.predict([Features])
+            PLANE[row,col] = int(round(output[0]))
+            row += 1
+        row = 0
+        col += 1
+
+    set(rc = {'figure.figsize':(12,8)})  # figure size!
+    sepal = heatmap(PLANE, cbar_kws={'ticks': [0, 1, 2]})
+    sepal.invert_yaxis() # to match our usual direction
+    sepal.set(xlabel="Petal Width (mm)", ylabel="Petal Length (mm)")
+    sepal.set_title(
+        f"Model Predictions with the Average Sepal Length ({plane_sepallen:.2f} cm) and Sepal Width ({plane_sepalwid:.2f} cm)")
+    sepal.set_xticks(sepal.get_xticks()[::4])
+    sepal.set_yticks(sepal.get_yticks()[::4])
+
+    # Modify color bar
+    cbar = sepal.collections[0].colorbar # Get color bar from heatmap
+    cbar.set_label('Species', labelpad=-95)  # Set the label for the color bar
+    cbar.set_ticklabels(['setosa', 'versicolor', 'virginica'])  # Set the tick labels
+
+    if features is not None:
+        # Highight inputted iris features from web form
+        highlight_x, highlight_y = plane_petalwid*10, plane_petallen*10
+        rect = Rectangle((highlight_y, highlight_x), 1, 1, linewidth=2, edgecolor='red', facecolor='none')
+        sepal.add_patch(rect)
+
+        # Add text
+        sepal.text(5 + 0.5, 5 + 0.5, 'Your iris', color='red', ha='center', va='center', fontsize=12, fontweight='bold')
+
+    # Save Plot
+    if features is not None:
+        sepal.get_figure().savefig('classifier/static/img/this_iris_knn_sepal.png')
+    else:
+        sepal.get_figure().savefig('classifier/static/img/iris_knn_sepal_new.png')
+    
+    clf() # clear figure to create next plot
+
+
+    ##################
+    ## Petal Plane
+    ##################
+
+    socketio.emit('retraining-status', {'message': 'Working on petal plane...'})
+    print("Working on petal plane...")
+    
+    col = 0
+    row = 0
+    for sepalwid in VERTICAL: # for every petal length
+        for sepallen in HORIZONT: # for every sepal length
+            Features = [ sepallen, sepalwid, plane_petallen, plane_petalwid ]
+            output = model.predict([Features])
+            PLANE[row,col] = int(round(output[0]))
+            row += 1
+        row = 0
+        col += 1
+
+    set(rc = {'figure.figsize':(12,8)})  # figure size!
+    petal = heatmap(PLANE, cbar_kws={'ticks': [0, 1, 2]})
+    petal.invert_yaxis() # to match our usual direction
+    petal.set(xlabel="Sepal Width (mm)", ylabel="Sepal Length (mm)")
+    petal.set_title(
+        f"Model Predictions with the Average Petal Length ({plane_petallen:.2f} cm) and Petal Width ({plane_petalwid:.2f} cm)")
+    petal.set_xticks(petal.get_xticks()[::4])
+    petal.set_yticks(petal.get_yticks()[::4])
+
+    if features is not None:
+        # Highight inputted iris features from web form
+        highlight_x, highlight_y = plane_sepalwid*10, plane_sepallen*10
+        rect = Rectangle((highlight_y, highlight_x), 1, 1, linewidth=2, edgecolor='red', facecolor='none')
+        petal.add_patch(rect)
+
+        # Add text
+        petal.text(5 + 0.5, 5 + 0.5, 'Your iris', color='red', ha='center', va='center', fontsize=12, fontweight='bold')
+
+    # Modify color bar
+    cbar = petal.collections[0].colorbar # Get color bar from heatmap
+    cbar.set_label('Species', labelpad=-95)  # Set the label for the color bar
+    cbar.set_ticklabels(['setosa', 'versicolor', 'virginica'])  # Set the tick labels
+
+    # Save Plot
+    if features is not None:
+        petal.get_figure().savefig('classifier/static/img/this_iris_knn_petal.png')
+    else:
+        petal.get_figure().savefig('classifier/static/img/iris_knn_petal_new.png')
+    clf()
+
+    ### NOTE: Look into using BytesIO and base64 for sending heatmaps to server
+    socketio.emit('retraining-status', {'message': 'Created plots!'})
+    print('Created plots!')
+
+def get_averages(db, model):
+    """Calculate average feature values for all data"""
     socketio.emit('retraining-status', {'message': 'Calculating averages...'})
     print("Calculating averages...")
     
@@ -256,100 +385,10 @@ def model_visualization(db, model):
     PETALWID_CORRS = float(PETALWID_CORRS[0])
     IRIS_CORR_TOTAL = int(IRIS_CORR_TOTAL[0])
 
-    ## We can only plot 2 dimensions at a time!
-    from seaborn import set, heatmap
-    from matplotlib import use
-    from matplotlib.pyplot import clf
-
-    # Select matplotlib backend to allow for plot creation
-    use('agg')
-
-    ##################
-    ## Sepal Plane
-    ##################
-    
-    # Get averages including corrections
+    # Calculate averages
     SEPALLEN_AVG = (SEPALLEN_DATA_TOTAL + SEPALLEN_CORRS) / (IRIS_DATA_TOTAL + IRIS_CORR_TOTAL)
     SEPALWID_AVG = (SEPALWID_DATA_TOTAL + SEPALWID_CORRS) / (IRIS_DATA_TOTAL + IRIS_CORR_TOTAL)
-
-    VERTICAL = arange(0,8,.1) # array of vertical input values
-    HORIZONT = arange(0,8,.1) # array of horizontal input values
-    PLANE = zeros( (len(HORIZONT),len(VERTICAL)) ) # the output array
-
-    socketio.emit('retraining-status', {'message': 'Working on sepal plane...'})
-    print("Working on sepal plane...")
-
-    col = 0
-    row = 0
-    for petalwid in VERTICAL: # for every petal width
-        for petallen in HORIZONT: # for every petal length
-            Features = [ SEPALLEN_AVG, SEPALWID_AVG, petallen, petalwid ]
-            output = model.predict([Features])
-            PLANE[row,col] = int(round(output[0]))
-            row += 1
-        row = 0
-        col += 1
-
-    set(rc = {'figure.figsize':(12,8)})  # figure size!
-    sepal = heatmap(PLANE, cbar_kws={'ticks': [0, 1, 2]})
-    sepal.invert_yaxis() # to match our usual direction
-    sepal.set(xlabel="Petal Width (mm)", ylabel="Petal Length (mm)")
-    sepal.set_title(
-        f"Model Predictions with the Average Sepal Length ({SEPALLEN_AVG:.2f} cm) and Sepal Width ({SEPALWID_AVG:.2f} cm)")
-    sepal.set_xticks(sepal.get_xticks()[::4])
-    sepal.set_yticks(sepal.get_yticks()[::4])
-
-    # Modify color bar
-    cbar = sepal.collections[0].colorbar # Get color bar from heatmap
-    cbar.set_label('Species', labelpad=-95)  # Set the label for the color bar
-    cbar.set_ticklabels(['setosa', 'versicolor', 'virginica'])  # Set the tick labels
-
-    # Save Plot
-    sepal.get_figure().savefig('classifier/static/img/iris_knn_sepal_new.png')
-    
-    clf() # clear figure to create next plot
-
-
-    ##################
-    ## Petal Plane
-    ##################
-
-    # Get averages including corrections
     PETALLEN_AVG = (PETALLEN_DATA_TOTAL + PETALLEN_CORRS) / (IRIS_DATA_TOTAL + IRIS_CORR_TOTAL)
     PETALWID_AVG = (PETALWID_DATA_TOTAL + PETALWID_CORRS) / (IRIS_DATA_TOTAL + IRIS_CORR_TOTAL)
 
-    socketio.emit('retraining-status', {'message': 'Working on petal plane...'})
-    print("Working on petal plane...")
-    
-    col = 0
-    row = 0
-    for sepalwid in VERTICAL: # for every petal length
-        for sepallen in HORIZONT: # for every sepal length
-            Features = [ sepallen, sepalwid, PETALLEN_AVG, PETALWID_AVG ]
-            output = model.predict([Features])
-            PLANE[row,col] = int(round(output[0]))
-            row += 1
-        row = 0
-        col += 1
-
-    set(rc = {'figure.figsize':(12,8)})  # figure size!
-    petal = heatmap(PLANE, cbar_kws={'ticks': [0, 1, 2]})
-    petal.invert_yaxis() # to match our usual direction
-    petal.set(xlabel="Sepal Width (mm)", ylabel="Sepal Length (mm)")
-    petal.set_title(
-        f"Model Predictions with the Average Petal Length ({PETALLEN_AVG:.2f} cm) and Petal Width ({PETALWID_AVG:.2f} cm)")
-    petal.set_xticks(petal.get_xticks()[::4])
-    petal.set_yticks(petal.get_yticks()[::4])
-
-    # Modify color bar
-    cbar = petal.collections[0].colorbar # Get color bar from heatmap
-    cbar.set_label('Species', labelpad=-95)  # Set the label for the color bar
-    cbar.set_ticklabels(['setosa', 'versicolor', 'virginica'])  # Set the tick labels
-
-    # Save Plot
-    petal.get_figure().savefig('classifier/static/img/iris_knn_petal_new.png')
-    clf()
-
-    ### NOTE: Look into using BytesIO and base64 for sending heatmaps to server
-    socketio.emit('retraining-status', {'message': 'Created plots!'})
-    print('Created plots!')
+    return SEPALLEN_AVG, SEPALWID_AVG, PETALLEN_AVG, PETALWID_AVG

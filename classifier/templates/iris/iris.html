@@ -60,6 +60,17 @@
                   document.getElementById('prediction').innerText = `Iris Species: ${data["species"]}`;
                   document.getElementById('incorrect').style.display='block';
                   document.getElementById('retrainStatus').innerText='';
+                  document.getElementById('classifyPlotContainer').innerHTML = data["images"];
+
+                  // Prevent images from caching so they are properly updated in real time
+                  const images = document.getElementById('classifyPlotContainer').getElementsByTagName('img');
+                  for (let i = 0; i < images.length; i++) {
+                      const img = images[i];
+                      const src = img.src.split('?')[0]; // Remove existing query parameters
+
+                      // Use timestamp as query parameter for unique URL
+                      img.src = src + '?t=' + new Date().getTime(); 
+                  }
               })
               .catch(error => {
                   console.error('Error: ', error);

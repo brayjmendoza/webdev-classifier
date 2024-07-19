@@ -1,19 +1,89 @@
 <!-- List Corrections -->
-<div id="cTable">
-  {% if corrections %}
-    <h2 id ="cHeader">Corrections:</h2>
-  {% endif %}
+{% if corrections %}
+  <button class="corrections-header" id="correctionsHeader">Corrections
+    <i id="caret" class="fa fa-caret-down"></i>
+  </button>
 
-  {% for c in corrections %}
+  <table class="corrections-table" id="correctionsTable">
+    <thead class="corr-table-head">
+      <th>Sepal Length</th>
+      <th>Sepal Width</th>
+      <th>Petal Length</th>
+      <th>Petal Width</th>
+      <th>Species</th>
+    </thead>
+    <tr>
+      <td colspan="5">
+        <hr>
+      </td>
+    </tr>
 
-    <p>Sepal Length: {{ c['sepallen'] }}</p>
-    <p>Sepal Width: {{ c['sepalwid'] }}</p>
-    <p>Petal Length: {{ c['petallen'] }}</p>
-    <p>Petal Width: {{ c['petalwid'] }}</p>
-    <p>Species: {{ index[c['species']] }}</p>
+    <tbody class="corr-table-body">
+      {% for c in corrections %}
+        <tr>
+          <td>{{ c['sepallen'] }}</td>
+          <td>{{ c['sepalwid'] }}</td>
+          <td>{{ c['petallen'] }}</td>
+          <td>{{ c['petalwid'] }}</td>
+          <td>{{ index[c['species']] }}</td>
+        </tr>
+        {% if not loop.last %}
+          <tr>
+            <td colspan="5">
+              <hr>
+            </td>
+          </tr>
+        {% endif %}
+      {% endfor %}
+    </tbody>
 
-    {% if not loop.last %}
-      <hr>
-    {% endif %}
-  {% endfor %}
-</div>
+  </table>
+{% endif %}
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    function attachDropdownListener() {
+      const correctionsHeader = document.getElementById('correctionsHeader');
+      const correctionsTable = document.getElementById('correctionsTable');
+      const caret = document.getElementById('caret');
+
+      if (correctionsHeader && correctionsTable && caret) {
+        correctionsHeader.addEventListener('click', () => {
+          correctionsTable.classList.toggle('active');
+          caret.classList.toggle('caret-up');
+        });
+      }
+    }
+
+    // Initial attachment of the event listener
+    attachDropdownListener();
+
+    // Create a MutationObserver to watch for changes in the corrections container
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'childList' && mutation.addedNodes.length) {
+          // // Save the current visibility state of the table
+          // const correctionsTable = document.getElementById('correctionsTable');
+          // const isTableActive = correctionsTable.classList.contains('active');
+
+          // Reattach the dropdown listener for new content
+          attachDropdownListener();
+
+          // // Restore the visibility state of the table
+          // if (isTableActive) {
+          //   correctionsTable.classList.toggle('active');
+          // }
+        }
+      });
+    });
+    
+    // Observe the corrections page for changes
+    const correctionsContainer = document.getElementById('correctionsPage');
+    if (correctionsContainer) {
+      observer.observe(correctionsContainer, {
+        childList: true,  // Observe addition/removal of child nodes
+        subtree: true     // Observe all descendant nodes
+      });
+    }
+  });
+</script>
