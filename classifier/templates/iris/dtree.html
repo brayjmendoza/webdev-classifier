@@ -8,20 +8,39 @@
 
   {% include 'iris/irisForm.html' %}
 
-  {% include 'retrain.html' %}
+  <!-- Retrain Button -->
+  <div class="retraining">
+    <button id="retrainButton" class ="retrain-button" type="button">
+      Retrain with Corrections
+    </button>
+  
+    <p id="retrainStatus" class="retrain-status"></p>
+  
+  
+    {% if session['retrained'] or not corrections %}
+      <!-- For initially loading the page -->
+      <script>
+        document.getElementById('retrainButton').style.display = 'none';
+      </script>
+    {% endif %}
+  </div>
   
   <div id="correctionsPage" class="corrections-page">
     {% include 'corrections.html' %}
   </div>
 
-  <div id="retrainPlots">
-    {% include 'iris/irisRetrainPlots.html' %}
-  </div>
+  <h2 class="visualize-header">Model Visualization</h2>
+  <div class="plots">
+    <div class="base-plots">
+      <h2 class="plot-header">Base Model</h2>
+      <img src="{{ url_for('static', filename='img/iris_dtree_sepal.png') }}" class="plot-images">
+      <img src="{{ url_for('static', filename='img/iris_dtree_petal.png') }}" class="plot-images">
+    </div>
 
-  <!--Need to change-->
-  <h2>Default KNN Model</h2>
-  <img src="{{ url_for('static', filename='img/iris_knn_sepal.png') }}" style="width: 45%">
-  <img src="{{ url_for('static', filename='img/iris_knn_petal.png') }}" style="width: 45%">
+    <div id="retrainPlots" class="retrain-plots">
+      {% include 'iris/irisRetrainPlots.html' %}
+    </div>
+  </div>
 
 {% endblock %}
 {% block subjs %}

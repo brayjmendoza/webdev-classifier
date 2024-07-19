@@ -3,7 +3,6 @@ from time import sleep
 
 from flask import (
     Blueprint, render_template, request, jsonify, session, current_app)
-# from flask_socketio import emit
 
 from classifier.commands import clean_files
 from classifier import socketio
@@ -43,7 +42,8 @@ def knn_classifier():
     return render_template('iris/knn.html', 
                            corrections=corrections, 
                            index=SPECIES,
-                           model='knn')
+                           model='knn',
+                           instancePlotExists=False)
 
 @iris_bp.route('/knn/predict', methods=["POST"])
 def knn_predict():
@@ -55,11 +55,18 @@ def knn_predict():
     socketio.emit('classify-status', {'message': 'Loaded!'})
     print('Loaded!')
 
-    # Make prediction
+    # Get data
     socketio.emit('classify-status', {'message': 'Classifying...'})
     data = request.json
-    session['iris_features'] = data   # store data in session in case of correction
 
+    # Determine if we need to plot
+    last_key = list(data.keys())[-1]
+    visualize =  data.pop(last_key)
+
+    # Store data in session to display on form
+    session['iris_features'] = data
+
+    # Make prediction
     Features = asarray([data['sepallen'],
                 data['sepalwid'],
                 data['petallen'],
@@ -70,10 +77,15 @@ def knn_predict():
     prediction = int(round(prediction[0]))  # unpack the extra brackets
     prediction = SPECIES[prediction]  # change to string
     
-    if 'included':
+    if visualize:
        model_visualization(get_db(), knn_model, Features)
 
-    return jsonify({"species": prediction, "images": render_template('iris/irisInstancePlots.html')})
+    instancePlotExists = os.path.exists('classifier/static/img/this_iris_knn_sepal.png')
+
+    return jsonify({"species": prediction, 
+                    "images": render_template('iris/irisInstancePlots.html', 
+                                              model='knn',
+                                              instancePlotExists=instancePlotExists)})
 
 
 @iris_bp.route('/incorrect', methods=["POST"])
@@ -149,7 +161,6 @@ def knn_retrain(features, targets):
 
     return new_knn_model
 
-
 @iris_bp.route('/knn/retrain_and_visualize', methods=['POST'])
 def knn_retrain_and_visualize():
     session['retrained'] = True
@@ -217,8 +228,14 @@ def dtree_classifier():
                            model='dtree')
 
 def model_visualization(db, model, features = None):
-    """Create images to visualize retrained models"""
+    """Create images to visualize models"""
     
+    # Handle correctly sending status messages for socketio
+    if features is not None:
+        status = 'classify-status'
+    else:
+        status = 'retraining-status'
+
     if features is not None:
         plane_sepallen = features[0]
         plane_sepalwid = features[1]
@@ -228,7 +245,7 @@ def model_visualization(db, model, features = None):
         plane_sepallen, plane_sepalwid, plane_petallen, plane_petalwid = get_averages(db, model)
 
     ## We can only plot 2 dimensions at a time!
-    from seaborn import set, heatmap, text
+    from seaborn import set, heatmap
     from matplotlib import use
     from matplotlib.pyplot import clf
     from matplotlib.patches import Rectangle
@@ -245,7 +262,7 @@ def model_visualization(db, model, features = None):
     HORIZONT = arange(0,8,.1) # array of horizontal input values
     PLANE = zeros( (len(HORIZONT),len(VERTICAL)) ) # the output array
 
-    socketio.emit('retraining-status', {'message': 'Working on sepal plane...'})
+    socketio.emit(status, {'message': 'Working on sepal plane...'})
     print("Working on sepal plane...")
 
     col = 0
@@ -263,24 +280,37 @@ def model_visualization(db, model, features = None):
     sepal = heatmap(PLANE, cbar_kws={'ticks': [0, 1, 2]})
     sepal.invert_yaxis() # to match our usual direction
     sepal.set(xlabel="Petal Width (mm)", ylabel="Petal Length (mm)")
-    sepal.set_title(
-        f"Model Predictions with the Average Sepal Length ({plane_sepallen:.2f} cm) and Sepal Width ({plane_sepalwid:.2f} cm)")
+
     sepal.set_xticks(sepal.get_xticks()[::4])
     sepal.set_yticks(sepal.get_yticks()[::4])
+    if features is not None:
+        sepal.set_title(
+            f"Model Predictions with Sepal Length {plane_petallen:.2f} cm and Sepal Width {plane_petalwid:.2f} cm")
+    else:
+        sepal.set_title(
+            f"Model Predictions with the Average Sepal Length ({plane_sepallen:.2f} cm) and Sepal Width ({plane_sepalwid:.2f} cm)")
 
     # Modify color bar
     cbar = sepal.collections[0].colorbar # Get color bar from heatmap
     cbar.set_label('Species', labelpad=-95)  # Set the label for the color bar
     cbar.set_ticklabels(['setosa', 'versicolor', 'virginica'])  # Set the tick labels
 
+    # Highight inputted iris features from web form
     if features is not None:
-        # Highight inputted iris features from web form
         highlight_x, highlight_y = plane_petalwid*10, plane_petallen*10
-        rect = Rectangle((highlight_y, highlight_x), 1, 1, linewidth=2, edgecolor='red', facecolor='none')
-        sepal.add_patch(rect)
 
-        # Add text
-        sepal.text(5 + 0.5, 5 + 0.5, 'Your iris', color='red', ha='center', va='center', fontsize=12, fontweight='bold')
+        # Make sure features are on the heatmaps
+        if highlight_x < 80 and highlight_y < 80:
+            rect = Rectangle((highlight_x, highlight_y), 1, 1, linewidth=2, edgecolor='#e399f2', facecolor='none')
+            sepal.add_patch(rect)
+
+            # Add text
+            sepal.text(highlight_x, highlight_y - 2, 'Your iris', color='#e399f2', ha='center', va='center', fontsize=16)
+        else:
+            # Tell user their iris is not on the plot (message shown in center of plot)
+            sepal.text(40, 40, 'Iris outside of plot', 
+                       color='#e399f2', ha='center', va='center', fontsize=16)
+
 
     # Save Plot
     if features is not None:
@@ -295,7 +325,7 @@ def model_visualization(db, model, features = None):
     ## Petal Plane
     ##################
 
-    socketio.emit('retraining-status', {'message': 'Working on petal plane...'})
+    socketio.emit(status, {'message': 'Working on petal plane...'})
     print("Working on petal plane...")
     
     col = 0
@@ -313,20 +343,30 @@ def model_visualization(db, model, features = None):
     petal = heatmap(PLANE, cbar_kws={'ticks': [0, 1, 2]})
     petal.invert_yaxis() # to match our usual direction
     petal.set(xlabel="Sepal Width (mm)", ylabel="Sepal Length (mm)")
-    petal.set_title(
-        f"Model Predictions with the Average Petal Length ({plane_petallen:.2f} cm) and Petal Width ({plane_petalwid:.2f} cm)")
     petal.set_xticks(petal.get_xticks()[::4])
     petal.set_yticks(petal.get_yticks()[::4])
-
     if features is not None:
-        # Highight inputted iris features from web form
+        petal.set_title(
+            f"Model Predictions with Petal Length {plane_petallen:.2f} cm and Petal Width {plane_petalwid:.2f} cm")
+    else:
+        petal.set_title(
+            f"Model Predictions with the Average Petal Length ({plane_petallen:.2f} cm) and Petal Width ({plane_petalwid:.2f} cm)")
+
+    # Highight inputted iris features from web form
+    if features is not None:
         highlight_x, highlight_y = plane_sepalwid*10, plane_sepallen*10
-        rect = Rectangle((highlight_y, highlight_x), 1, 1, linewidth=2, edgecolor='red', facecolor='none')
-        petal.add_patch(rect)
 
-        # Add text
-        petal.text(5 + 0.5, 5 + 0.5, 'Your iris', color='red', ha='center', va='center', fontsize=12, fontweight='bold')
+        # Make sure features are on the heatmaps
+        if highlight_x < 80 and highlight_y < 80:
+            rect = Rectangle((highlight_x, highlight_y), 1, 1, linewidth=2, edgecolor='#e399f2', facecolor='none')
+            petal.add_patch(rect)
 
+            # Add text
+            petal.text(highlight_x, highlight_y - 2, 'Your iris', color='#e399f2', ha='center', va='center', fontsize=16)
+        else:
+            # Tell user their iris is not on the plot (message shown in center of plot)
+            petal.text(40, 40, 'Iris outside of plot', 
+                        color='#e399f2', ha='center', va='center', fontsize=16)
     # Modify color bar
     cbar = petal.collections[0].colorbar # Get color bar from heatmap
     cbar.set_label('Species', labelpad=-95)  # Set the label for the color bar

@@ -46,13 +46,15 @@ def clean_files(classify = None, model = None):
     img_prefix = img_dir[0][0] # Get directory path
     for file in img_dir[0][2]:
         if classify and model:
-            if classify in file and model in file and 'new' in file:
-                os.remove(f'{img_prefix}/{file}')
+            if classify in file and model in file:
+                if 'new' in file or 'this' in file:
+                    os.remove(f'{img_prefix}/{file}')
         elif classify:
-            if classify in file and 'new' in file:
-                os.remove(f'{img_prefix}/{file}')
+            if classify in file:
+                if 'new' in file or 'this' in file:
+                    os.remove(f'{img_prefix}/{file}')
         else:
-            if 'new' in file:
+            if 'new' in file or 'this' in file:
                 os.remove(f'{img_prefix}/{file}')
 
 @click.command('reset-iris')

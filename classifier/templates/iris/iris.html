@@ -49,11 +49,12 @@
               const sepalwid = document.getElementById('sepalwid').value;
               const petallen = document.getElementById('petallen').value;
               const petalwid = document.getElementById('petalwid').value;
-                  
+              const visualize = document.getElementById('visualize').checked;
+
               fetch(path, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ sepallen, sepalwid, petallen, petalwid })
+                  body: JSON.stringify({ sepallen, sepalwid, petallen, petalwid, visualize })
               })
               .then(response => response.json())
               .then(data => {
