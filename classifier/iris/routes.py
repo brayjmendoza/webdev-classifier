@@ -78,14 +78,15 @@ def knn_predict():
     prediction = SPECIES[prediction]  # change to string
     
     if visualize:
-       model_visualization(get_db(), knn_model, Features)
+        model_visualization(get_db(), knn_model, Features)
+        return jsonify({"species": prediction, 
+                        "images": render_template('iris/irisInstancePlots.html', 
+                                                    model='knn',
+                                                    instancePlotExists=True)})
+    
+    return jsonify({"species": prediction})
 
-    instancePlotExists = os.path.exists('classifier/static/img/this_iris_knn_sepal.png')
-
-    return jsonify({"species": prediction, 
-                    "images": render_template('iris/irisInstancePlots.html', 
-                                              model='knn',
-                                              instancePlotExists=instancePlotExists)})
+    
 
 
 @iris_bp.route('/incorrect', methods=["POST"])

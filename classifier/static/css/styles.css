@@ -171,6 +171,7 @@ select {
 
 .visualize-label {
     margin-right: 20px;
+    font-size: 1.1em;
 }
 
 .visualize-toggle {
@@ -330,15 +331,21 @@ input:checked + .slider:before {
 
 .corrections-table {
     width: 50%;
-    display: none;
+}
+
+.corr-table-head th {
+    padding-left: 10px;
+    padding-right: 10px;
 }
 
 .corr-table-body td {
     text-align: center;
 }
 
-.corrections-table.active {
-    display: block;
+.corr-table-container {
+    overflow: hidden;
+    height: 0;
+    transition: height 0.2s ease;
 }
 
 .caret-up {

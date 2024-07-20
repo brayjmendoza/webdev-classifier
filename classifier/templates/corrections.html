@@ -4,53 +4,62 @@
     <i id="caret" class="fa fa-caret-down"></i>
   </button>
 
-  <table class="corrections-table" id="correctionsTable">
-    <thead class="corr-table-head">
-      <th>Sepal Length</th>
-      <th>Sepal Width</th>
-      <th>Petal Length</th>
-      <th>Petal Width</th>
-      <th>Species</th>
-    </thead>
-    <tr>
-      <td colspan="5">
-        <hr>
-      </td>
-    </tr>
-
-    <tbody class="corr-table-body">
-      {% for c in corrections %}
+  <div class="corr-table-container" id="correctionsTableContainer">
+    <table class="corrections-table" id="correctionsTable">
+      <thead class="corr-table-head">
+        <th>Sepal Length</th>
+        <th>Sepal Width</th>
+        <th>Petal Length</th>
+        <th>Petal Width</th>
+        <th>Species</th>
         <tr>
-          <td>{{ c['sepallen'] }}</td>
-          <td>{{ c['sepalwid'] }}</td>
-          <td>{{ c['petallen'] }}</td>
-          <td>{{ c['petalwid'] }}</td>
-          <td>{{ index[c['species']] }}</td>
+          <td colspan="5">
+            <hr>
+          </td>
         </tr>
-        {% if not loop.last %}
+      </thead>
+      <tbody class="corr-table-body">
+        {% for c in corrections %}
           <tr>
-            <td colspan="5">
-              <hr>
-            </td>
+            <td>{{ c['sepallen'] }}</td>
+            <td>{{ c['sepalwid'] }}</td>
+            <td>{{ c['petallen'] }}</td>
+            <td>{{ c['petalwid'] }}</td>
+            <td>{{ index[c['species']] }}</td>
           </tr>
-        {% endif %}
-      {% endfor %}
-    </tbody>
-
-  </table>
+          {% if not loop.last %}
+            <tr>
+              <td colspan="5">
+                <hr>
+              </td>
+            </tr>
+          {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 {% endif %}
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     function attachDropdownListener() {
-      const correctionsHeader = document.getElementById('correctionsHeader');
-      const correctionsTable = document.getElementById('correctionsTable');
+      const tableHeader = document.getElementById('correctionsHeader');
+      const tableContainer = document.getElementById('correctionsTableContainer');
+      const table = document.getElementById('correctionsTable');
       const caret = document.getElementById('caret');
 
-      if (correctionsHeader && correctionsTable && caret) {
-        correctionsHeader.addEventListener('click', () => {
-          correctionsTable.classList.toggle('active');
+      if (tableHeader && tableContainer && caret) {
+        tableHeader.addEventListener('click', () => {
+          tableContainer.classList.toggle('expanded');
           caret.classList.toggle('caret-up');
+
+          let isExpanded = tableContainer.classList.contains('expanded');
+
+          if (isExpanded) {
+            tableContainer.style.height = table.scrollHeight + 'px';
+          } else {
+            tableContainer.style.height = '0px';
+          }
         });
       }
     }
@@ -63,16 +72,16 @@
       mutations.forEach((mutation) => {
         if (mutation.type === 'childList' && mutation.addedNodes.length) {
           // // Save the current visibility state of the table
-          // const correctionsTable = document.getElementById('correctionsTable');
-          // const isTableActive = correctionsTable.classList.contains('active');
+          const tableContainer = document.getElementById('correctionsTableContainer');
+          let isExpanded = tableContainer.classList.contains('expanded');
 
           // Reattach the dropdown listener for new content
           attachDropdownListener();
 
-          // // Restore the visibility state of the table
-          // if (isTableActive) {
-          //   correctionsTable.classList.toggle('active');
-          // }
+          // Restore the visibility state of the table
+          if (isExpanded) {
+            tableContainer.classList.toggle('expanded');
+          }
         }
       });
     });
