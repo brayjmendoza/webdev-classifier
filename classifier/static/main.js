@@ -37,7 +37,7 @@ function retrain(classType, model) {
      * model - the model to be retrained (e.g. knn, dtree)
      */ 
     
-    document.addEventListener('DOMContentLoaded', (event) => {
+    document.addEventListener('DOMContentLoaded', () => {
         // Connect to the Socket.IO server
         const socket = io();
 
@@ -71,6 +71,101 @@ function retrain(classType, model) {
                 console.error('Error:', error);
                 document.getElementById('retrainStatus').innerText = "An error occurred.";
             });
+        });
+    });
+}
+
+// Handle corrections table dropdown functionality
+function attachCorrectionListeners(classType, model) {
+    function attachDropdownListener() {
+        const tableHeader = document.getElementById('correctionsHeader');
+        const tableContainer = document.getElementById('correctionsTableContainer');
+        const table = document.getElementById('correctionsTable');
+        const caret = document.getElementById('caret');
+        const clearButtonContainer = document.getElementById('clearCorrectionsContainer');
+
+        if (tableHeader && tableContainer && caret) {
+        tableHeader.addEventListener('click', () => {
+            tableContainer.classList.toggle('expanded');
+            caret.classList.toggle('caret-up');
+
+            let isExpanded = tableContainer.classList.contains('expanded');
+
+            if (isExpanded) {
+                tableContainer.style.height = table.scrollHeight + 'px';
+                clearButtonContainer.style.display = 'inline-block';
+            } else {
+                tableContainer.style.height = '0px';
+                clearButtonContainer.style.display = 'none';
+            }
+        });
+        }
+    }
+
+    // Initial attachment of event listeners
+    attachDropdownListener();
+    clearCorrections(classType, model);
+
+    // Create a MutationObserver to watch for changes in the corrections container
+    const correctionsListObserver = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.type === 'childList' && mutation.addedNodes.length) {
+                // // Save the current visibility state of the table
+                const tableContainer = document.getElementById('correctionsTableContainer');
+                let isExpanded = tableContainer.classList.contains('expanded');
+
+                // Reattach the dropdown listener for new content
+                attachDropdownListener();
+                clearCorrections(classType, model)
+
+                // Restore the visibility state of the table
+                if (isExpanded) {
+                tableContainer.classList.toggle('expanded');
+                }
+            }
+        });
+    });
+
+    // Observe the corrections page for changes
+    const correctionsContainer = document.getElementById('correctionsPage');
+    correctionsListObserver.observe(correctionsContainer, {
+        childList: true,  // Observe addition/removal of child nodes
+        subtree: true     // Observe all descendant nodes
+    });
+}
+
+function clearCorrections(classType, model) {
+    /*
+     * Clear corrections table and corresponding data
+     */
+
+    // Connect to the Socket.IO server
+    const socket = io();
+
+    // Handle the 'status' event from the server
+    socket.on('clear-status', function(data) {
+        document.getElementById('clearCorrectionsStatus').innerText = data.message;
+    });
+    
+    let path = `/${classType}/clear_corrections`
+    document.getElementById('clearCorrectionsButton').addEventListener('click', function() {
+        document.getElementById('clearCorrectionsButton').style.display = 'none';
+        fetch(path, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ model })
+        })
+        .then(response => response.text())
+        .then(data => {
+            console.log(data)
+            document.getElementById('correctionsPage').innerHTML = data;
+            document.getElementById('retrainButton').style.display = 'none';
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('clearCorrectionsStatus').innerText = "An error occurred.";
         });
     });
 }

@@ -86,9 +86,6 @@ def knn_predict():
     
     return jsonify({"species": prediction})
 
-    
-
-
 @iris_bp.route('/incorrect', methods=["POST"])
 def knn_incorrect():
     # Get species index
@@ -433,3 +430,28 @@ def get_averages(db, model):
     PETALWID_AVG = (PETALWID_DATA_TOTAL + PETALWID_CORRS) / (IRIS_DATA_TOTAL + IRIS_CORR_TOTAL)
 
     return SEPALLEN_AVG, SEPALWID_AVG, PETALLEN_AVG, PETALWID_AVG
+
+@iris_bp.route('/clear_corrections', methods = ['POST'])
+def clear_corrections():
+    data = request.json
+    model = data['model']
+    
+    socketio.emit('clear-status', {'message': 'Clearing data...'})
+    print("Clearing data...")
+
+    # Clear data for given model
+    db = get_db()
+    db.execute(
+        "DELETE FROM iris "
+        "WHERE model LIKE ?", (model, )
+    )
+    db.commit()
+
+    # Delete retrained model (since there are no more corrections)
+    os.remove(f'classifier/models/iris/{model}_new.pkl')
+
+    socketio.emit('clear-status', {'message': 'Cleared!'})
+    print("Cleared!")
+    sleep(0.5)
+
+    return render_template('corrections.html')

@@ -15,15 +15,14 @@
     </button>
   
     <p id="retrainStatus" class="retrain-status"></p>
-  
-  
-    {% if session['retrained'] or not corrections %}
-      <!-- For initially loading the page -->
-      <script>
-        document.getElementById('retrainButton').style.display = 'none';
-      </script>
-    {% endif %}
   </div>
+
+  {% if session['retrained'] or not corrections %}
+  <!-- For displaying retrain button -->
+    <script>
+        document.getElementById('retrainButton').style.display = 'none';
+    </script>
+  {% endif %}
   
   <div id="correctionsPage" class="corrections-page">
     {% include 'corrections.html' %}
@@ -45,7 +44,8 @@
 {% endblock %}
 {% block subjs %}
   <script>
-    prediction('knn')
-    retrain('iris', 'knn')
+    prediction('knn');
+    retrain('iris', 'knn');
+    attachCorrectionListeners('iris', 'knn')
   </script>
 {% endblock %}

@@ -317,6 +317,14 @@ input:checked + .slider:before {
     margin-left: 30px;
     margin-right: 10px;
     margin-bottom: 30px;
+    width: fit-content;
+}
+
+.corrections-btns {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
 }
 
 .corrections-header {
@@ -330,7 +338,7 @@ input:checked + .slider:before {
 }
 
 .corrections-table {
-    width: 50%;
+    width: 100%;
 }
 
 .corr-table-head th {
@@ -346,10 +354,27 @@ input:checked + .slider:before {
     overflow: hidden;
     height: 0;
     transition: height 0.2s ease;
+    margin-bottom: 20px;
 }
 
 .caret-up {
     transform: rotate(180deg);
+}
+
+.clear-corrections-container {
+    display: none;
+}
+
+.clear-corrections-btn {
+    color: white;
+    background-color: rgb(255, 81, 81);
+    border: none;
+    border-radius: 5px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    padding-left: 10px;
+    padding-right: 10px;
+    cursor: pointer;
 }
 
 /* MODEL VISUALIZATION HEATMAPS */
