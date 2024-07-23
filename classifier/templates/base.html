@@ -7,34 +7,25 @@
   </head>
   <body>
     <header class="head">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="menu-icon" id="menu-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="menu-icon" id="menu-icon" onclick="toggleSidebar()">
         <g><path d="M21,6H3V5h18V6z M21,11H3v1h18V11z M21,17H3v1h18V17z" fill="white"></path></g>
       </svg>
       <h1 class="name">Classifiers</h1>
     </header>
-    <nav class="nav-links" id="nav-links">
+    <nav class="nav-links" id="navLinks">
       <a href="{{ url_for('index') }}" class="">Home</a>
       <a href="{{ url_for('iris.iris') }}">Iris Classifiers</a>
     </nav>
-    <section class="content">
+    <section class="content" id="content">
       <header>
         {% block header %}{% endblock %}
       </header>
-            
+        
         {% block content %}{% endblock %}
 
         <!-- Include Socket.IO client library -->
         <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
         <script src="{{ url_for('static', filename='main.js') }}"></script>
-        <script>
-          const menuIcon = document.getElementById('menu-icon');
-          const navLinks = document.getElementById('nav-links');
-
-          menuIcon.addEventListener('click', () => {
-            // toggles active class on nav-links, so we can target it with .nav-links.active
-            navLinks.classList.toggle('active');
-          })
-        </script>
       </section>
 
       {% block js %}{% endblock %}

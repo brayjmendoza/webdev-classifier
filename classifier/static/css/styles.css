@@ -5,11 +5,12 @@ body {
     font-family: Georgia, 'Times New Roman', Times, serif;
 }
 
-button {
-    font-family: Georgia, 'Times New Roman', Times, serif;
+.content {
+    margin-top: 65px;
+    transition: margin-left 0.3s;
 }
 
-select {
+button, select, a {
     font-family: Georgia, 'Times New Roman', Times, serif;
 }
 
@@ -36,10 +37,10 @@ select {
 
     z-index: 1;
 
-    /* position: fixed;
+    position: fixed;
     top: 0px;
     right: 0px;
-    left: 0px; */
+    left: 0px;
 }
 
 .name {
@@ -55,19 +56,39 @@ select {
 
 /* NAVIGATION */
 .nav-links {
-    display: none;
+    display: flex;
+    overflow: hidden;
+    text-wrap: nowrap;
     flex-direction: column;
+    background-color: #fcfcfc;
     gap: 20px;
 
     margin: 10px;
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    bottom: 0px;
+    transition: width 0.3s;
+    width: 0px;
+
+    /* To account for header */
+    padding-top: 65px;
+    padding-left: 5px;
 }
 
-.nav-links.active {
-    display: flex;
+
+.nav-links.extended {
+    margin-bottom: 0px;
+    box-shadow: 3px 0px 5px rgba(0, 0, 0, 0.15);
 }
 
 .nav-links a {
     color: rgb(0, 94, 255);
+    font-size: 1.2em;
+}
+
+.content.shifted {
+    margin-left: 16%; /* Shift main content with sidebar */
 }
 
 /* CLASSIFIER HEADER */

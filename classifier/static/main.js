@@ -1,3 +1,22 @@
+function toggleSidebar() {
+    /*
+     * Toggle sidebar navigation visibility
+     */
+    const sidebar = document.getElementById('navLinks');
+    const mainContent = document.getElementById('content');
+    const isOpen = sidebar.style.width === '15%';
+
+    if (isOpen) {
+        sidebar.style.width = '0';
+        mainContent.classList.remove('shifted');
+        sidebar.classList.remove('extended');
+    } else {
+        sidebar.style.width = '15%';
+        mainContent.classList.add('shifted');
+        sidebar.classList.add('extended');
+    }
+}
+
 function correction(classType, model) {
     /* Send corrections if prediction was wrong
      *
@@ -34,19 +53,21 @@ function correction(classType, model) {
 
             // Restore corrections list state
             const tableContainer = document.getElementById('correctionsTableContainer');
-            tableContainer.style.transition = 'none'; // disable transition
-            if (isExpanded) {
-                const table = document.getElementById('correctionsTable');
-                const caret = document.getElementById('caret');
-                const clearButtonContainer = document.getElementById('clearCorrectionsContainer');
+            if (tableContainer) {
+                tableContainer.style.transition = 'none'; // disable transition
+                if (isExpanded) {
+                    const table = document.getElementById('correctionsTable');
+                    const caret = document.getElementById('caret');
+                    const clearButtonContainer = document.getElementById('clearCorrectionsContainer');
 
-                tableContainer.classList.toggle('expanded');
-                caret.classList.toggle('caret-up');
-                tableContainer.style.height = table.scrollHeight + 'px';
-                clearButtonContainer.style.display = 'inline-block';
+                    tableContainer.classList.toggle('expanded');
+                    caret.classList.toggle('caret-up');
+                    tableContainer.style.height = table.scrollHeight + 'px';
+                    clearButtonContainer.style.display = 'inline-block';
+                }
+                void tableContainer.offsetHeight; // force reflow to apply changes without transition
+                tableContainer.style.transition = ''; // re-enable transition
             }
-            void tableContainer.offsetHeight; // force reflow to apply changes without transition
-            tableContainer.style.transition = ''; // re-enable transition
         })
         .catch(error => {
             console.error('Error: ', error);

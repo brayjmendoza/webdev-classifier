@@ -45,7 +45,7 @@
 {% block subjs %}
   <script>
     prediction('knn');
-    correction('iris', 'dtree')
+    correction('iris', 'knn')
     retrain('iris', 'knn');
     attachCorrectionListeners('iris', 'knn')
   </script>
