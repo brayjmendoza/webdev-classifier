@@ -1,12 +1,21 @@
 function correction(classType) {
-    // Send correction if prediction was wrong
-    // classType is the thing that was predicted (i.e. iris species)
+    /* Send correction if prediction was wrong
+     * classType is the thing that was predicted (i.e. iris species)
+     */
 
     let path = `/${classType}/incorrect`;
 
     document.getElementById('correction').addEventListener('submit', function(e) {
         e.preventDefault(); // prevents reload
         const correction = document.getElementById('species').value;
+        
+        // Store state of corrections table (for display purposes)
+        let isExpanded;
+        if (document.getElementById('correctionsTableContainer')) {
+            isExpanded = document.getElementById('correctionsTableContainer').classList.contains('expanded');
+        } else {
+            isExpanded = false;
+        }
             
         fetch(path, {
             method: 'POST',
@@ -18,7 +27,23 @@ function correction(classType) {
             document.getElementById('correction').style.display='none';
             document.getElementById('feedback').innerText = 'Thanks for the feedback!';
             document.getElementById('correctionsPage').innerHTML = data;
-            document.getElementById('retrainButton').style.display = 'block';  
+            document.getElementById('retrainButton').style.display = 'block';
+
+            // Restore corrections list state
+            const tableContainer = document.getElementById('correctionsTableContainer');
+            tableContainer.style.transition = 'none'; // disable transition
+            if (isExpanded) {
+                const table = document.getElementById('correctionsTable');
+                const caret = document.getElementById('caret');
+                const clearButtonContainer = document.getElementById('clearCorrectionsContainer');
+
+                tableContainer.classList.toggle('expanded');
+                caret.classList.toggle('caret-up');
+                tableContainer.style.height = table.scrollHeight + 'px';
+                clearButtonContainer.style.display = 'inline-block';
+            }
+            void tableContainer.offsetHeight; // force reflow to apply changes without transition
+            tableContainer.style.transition = ''; // re-enable transition
         })
         .catch(error => {
             console.error('Error: ', error);
@@ -85,43 +110,46 @@ function attachCorrectionListeners(classType, model) {
         const clearButtonContainer = document.getElementById('clearCorrectionsContainer');
 
         if (tableHeader && tableContainer && caret) {
-        tableHeader.addEventListener('click', () => {
-            tableContainer.classList.toggle('expanded');
-            caret.classList.toggle('caret-up');
+            tableHeader.addEventListener('click', () => {
+                tableContainer.classList.toggle('expanded');
+                caret.classList.toggle('caret-up');
 
-            let isExpanded = tableContainer.classList.contains('expanded');
+                let isExpanded = tableContainer.classList.contains('expanded');
 
-            if (isExpanded) {
-                tableContainer.style.height = table.scrollHeight + 'px';
-                clearButtonContainer.style.display = 'inline-block';
-            } else {
-                tableContainer.style.height = '0px';
-                clearButtonContainer.style.display = 'none';
-            }
-        });
+                if (isExpanded) {
+                    tableContainer.style.height = table.scrollHeight + 'px';
+                    clearButtonContainer.style.display = 'inline-block';
+                } else {
+                    tableContainer.style.height = '0px';
+                    clearButtonContainer.style.display = 'none';
+                }
+            });
         }
     }
 
     // Initial attachment of event listeners
-    attachDropdownListener();
-    clearCorrections(classType, model);
+    const tableHeader = document.getElementById('correctionsHeader');
+    if (tableHeader)  {
+        attachDropdownListener();
+        clearCorrections(classType, model);
+    }
 
     // Create a MutationObserver to watch for changes in the corrections container
     const correctionsListObserver = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
             if (mutation.type === 'childList' && mutation.addedNodes.length) {
-                // // Save the current visibility state of the table
-                const tableContainer = document.getElementById('correctionsTableContainer');
-                let isExpanded = tableContainer.classList.contains('expanded');
+                // Save the current visibility state of the table
+                // const tableContainer = document.getElementById('correctionsTableContainer');
+                // let isExpanded = tableContainer.classList.contains('expanded');
 
                 // Reattach the dropdown listener for new content
                 attachDropdownListener();
-                clearCorrections(classType, model)
+                clearCorrections(classType, model);
 
-                // Restore the visibility state of the table
-                if (isExpanded) {
-                tableContainer.classList.toggle('expanded');
-                }
+                // // Restore the visibility state of the table
+                // if (isExpanded) {
+                //     tableContainer.classList.toggle('expanded');
+                // }
             }
         });
     });
@@ -157,10 +185,11 @@ function clearCorrections(classType, model) {
             },
             body: JSON.stringify({ model })
         })
-        .then(response => response.text())
+        .then(response => response.json())
         .then(data => {
-            console.log(data)
-            document.getElementById('correctionsPage').innerHTML = data;
+            console.log(data);
+            document.getElementById('correctionsPage').innerHTML = data["corrections"];
+            document.getElementById('retrainPlots').innerHTML = data["retrain_plots"];
             document.getElementById('retrainButton').style.display = 'none';
         })
         .catch(error => {

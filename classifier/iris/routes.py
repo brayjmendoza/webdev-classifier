@@ -447,11 +447,19 @@ def clear_corrections():
     )
     db.commit()
 
-    # Delete retrained model (since there are no more corrections)
-    os.remove(f'classifier/models/iris/{model}_new.pkl')
+    # Delete retrained model and plots (since there are no more corrections)
+    retrained_model_path = f'classifier/models/iris/{model}_new.pkl'
+    if os.path.exists(retrained_model_path):
+        os.remove(retrained_model_path)
+        os.remove(f'classifier/static/img/iris_{model}_sepal_new.png')
+        os.remove(f'classifier/static/img/iris_{model}_petal_new.png')
+
+    session['retrained'] = False
+
 
     socketio.emit('clear-status', {'message': 'Cleared!'})
     print("Cleared!")
     sleep(0.5)
 
-    return render_template('corrections.html')
+    return jsonify({"corrections": render_template('corrections.html'),
+                    "retrain_plots": render_template('iris/irisRetrainPlots.html')})
