@@ -20,6 +20,10 @@ def clean_files(classify = None, model = None):
     Cleanup files that may have been created while running
 
     Examples: new models, new plots to visualize new models
+
+    Parameters:
+    classify - specifies for what object to clean the files for (e.g. clean only iris files)
+    model - specifies for what model to clean the files for (e.g. only KNN model)
     """
 
     # Remove new models
@@ -41,7 +45,7 @@ def clean_files(classify = None, model = None):
                 if 'new' in file[2][i]:
                     os.remove(f'{prefix}/{file[2][i]}')
 
-    # Remove plots for new models
+    # Remove plots for predictions and new models
     img_dir = list(os.walk('classifier/static/img'))
     img_prefix = img_dir[0][0] # Get directory path
     for file in img_dir[0][2]:
@@ -59,15 +63,22 @@ def clean_files(classify = None, model = None):
 
 @click.command('reset-iris')
 def reset_iris_command():
+    """
+    Clear iris database and iris files as if the
+    iris pages/models have never been touched
+    """
+    # Clear iris table in database
     clear_iris()
     click.echo('Reset iris table.')
 
+    # Delete any retrained iris models
     models = list(os.walk('classifier/models/iris'))[0][2]
     for model in models:
         if 'new' in model:
             os.remove(f'classifier/models/iris/{model}')
     click.echo("Removed retrained iris models.")
 
+    # Delete any iris model visualization aside from default plots
     plots = list(os.walk('classifier/static/img'))[0][2]
     for plot in plots:
         if 'iris' and 'new' in plot:
@@ -76,13 +87,17 @@ def reset_iris_command():
 
 @click.command('clean')
 def clean_command():
+    """
+    Delete all files created when the app
+    was being used
+    """
     clean_files()
     click.echo('Cleaned files.')
 
 @click.command('reset-app')
 def reset_app_command():
     """
-    Clear databases and cleanup files as if the
+    Re-initialize the database and cleanup files as if the
     app has never been used before
     """
     clean_files()

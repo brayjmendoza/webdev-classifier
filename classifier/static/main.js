@@ -1,6 +1,9 @@
-function correction(classType) {
-    /* Send correction if prediction was wrong
-     * classType is the thing that was predicted (i.e. iris species)
+function correction(classType, model) {
+    /* Send corrections if prediction was wrong
+     *
+     * Parameters:
+     * classType - the thing that was predicted (e.g. iris species)
+     * model - the model used to predict (e.g. knn, dtree)
      */
 
     let path = `/${classType}/incorrect`;
@@ -20,7 +23,7 @@ function correction(classType) {
         fetch(path, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ correction })
+            body: JSON.stringify({ correction, model })
         })
         .then(response => response.text())
         .then(data => {
@@ -101,9 +104,18 @@ function retrain(classType, model) {
     });
 }
 
-// Handle corrections table dropdown functionality
 function attachCorrectionListeners(classType, model) {
+    /* Attach event listeners to the buttons in the corrections list
+     * 
+     * Parameters:
+     * classType - the thing that was predicted (e.g. iris species)
+     * model - the model used to predict (e.g. knn, dtree) 
+     */
+
     function attachDropdownListener() {
+        /*
+         * Attach the event listener for dropdown functionality
+        */
         const tableHeader = document.getElementById('correctionsHeader');
         const tableContainer = document.getElementById('correctionsTableContainer');
         const table = document.getElementById('correctionsTable');
@@ -111,6 +123,7 @@ function attachCorrectionListeners(classType, model) {
         const clearButtonContainer = document.getElementById('clearCorrectionsContainer');
 
         if (tableHeader && tableContainer && caret) {
+            // Dropdown functionality
             tableHeader.addEventListener('click', () => {
                 tableContainer.classList.toggle('expanded');
                 caret.classList.toggle('caret-up');
@@ -139,18 +152,9 @@ function attachCorrectionListeners(classType, model) {
     const correctionsListObserver = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
             if (mutation.type === 'childList' && mutation.addedNodes.length) {
-                // Save the current visibility state of the table
-                // const tableContainer = document.getElementById('correctionsTableContainer');
-                // let isExpanded = tableContainer.classList.contains('expanded');
-
                 // Reattach the dropdown listener for new content
                 attachDropdownListener();
                 clearCorrections(classType, model);
-
-                // // Restore the visibility state of the table
-                // if (isExpanded) {
-                //     tableContainer.classList.toggle('expanded');
-                // }
             }
         });
     });
@@ -165,7 +169,11 @@ function attachCorrectionListeners(classType, model) {
 
 function clearCorrections(classType, model) {
     /*
-     * Clear corrections table and corresponding data
+     * Sends request to clear corrections table and corresponding data
+     *
+     * Parameters:
+     * classType - the thing that was predicted (e.g. iris species)
+     * model - the model used to predict (e.g. knn, dtree)
      */
 
     // Connect to the Socket.IO server

@@ -7,7 +7,7 @@ from flask_socketio import SocketIO
 socketio = SocketIO()
 
 def create_app(test_config = None):
-    # create and configure app
+    # Create and configure app
     app = Flask(__name__, instance_relative_config = True)
     app.config.from_mapping(
         SECRET_KEY = 'dev',
@@ -19,12 +19,13 @@ def create_app(test_config = None):
     else:
         app.config.from_mapping(test_config)
 
-    # ensure instance folder exists
+    # Ensure instance folder exists
     try:
         os.makedirs(app.instance_path)
     except OSError:
         pass
 
+    # Initialize socketio to allow for loading messages
     socketio.init_app(app)
     
     # Register database functions/commands

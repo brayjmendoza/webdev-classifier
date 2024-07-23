@@ -4,9 +4,10 @@ from joblib import load
 
 #### CONSTANTS ####
 TEST_PERCENT = 0.2
-BEST_K = 9     # best k for knn model taken from previous cross-validation (hw5)
+BEST_K = 9     # best k for knn model taken from previous cross-validation (CS35 hw5)
 
 def load_knn_model():
+    """Load the iris KNN model"""
     path="classifier/models/iris/knn.pkl"
 
     # Use retrained model if it exists
@@ -18,6 +19,7 @@ def load_knn_model():
     return load(path)
 
 def load_dtree_model():
+    """Load the iris dtree model"""
     path="classifier/models/iris/dtree.pkl"
 
     # Use retrained model if it exists

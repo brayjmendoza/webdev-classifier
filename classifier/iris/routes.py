@@ -2,10 +2,11 @@ import os
 from time import sleep
 
 from flask import (
-    Blueprint, render_template, request, jsonify, session, current_app)
+    Blueprint, render_template, request, jsonify, session)
+
+from classifier import socketio  # to give loading messages when clicking buttons
 
 from classifier.commands import clean_files
-from classifier import socketio
 from classifier.iris import model_loader
 from classifier.database.db import get_db
 from numpy import asarray, array, reshape, concatenate, arange, zeros, size
@@ -23,7 +24,9 @@ def iris():
 
 @iris_bp.route('/knn', methods=["GET"])
 def knn_classifier():
+    """View the page for the k-nearest neighbors iris classifier"""
 
+    # Clear knn models/plots created from past use
     clean_files(classify='iris', model='knn')
 
     db = get_db()
@@ -47,6 +50,13 @@ def knn_classifier():
 
 @iris_bp.route('/knn/predict', methods=["POST"])
 def knn_predict():
+    """
+    Make an iris species prediction using the KNN model.
+    
+    Also creates heatmap visualizations for the given features
+    submitted on the web form if specified on the web page
+    """
+
     # Load model
     socketio.emit('classify-status', {'message': 'Loading model...'})
     print('Loading model...')
@@ -86,44 +96,14 @@ def knn_predict():
     
     return jsonify({"species": prediction})
 
-@iris_bp.route('/incorrect', methods=["POST"])
-def knn_incorrect():
-    # Get species index
-    correction = request.json
-    species = SPECIES_INDEX[correction['correction']]
-    
-    # Get inputted features from session
-    iris_features = session['iris_features']
-
-    # Add correction to database
-    db = get_db()
-
-    db.execute(
-        "INSERT INTO iris (sepallen, sepalwid, petallen, petalwid, species, model)"
-        "VALUES (?, ?, ?, ?, ?, 'knn')",
-        (iris_features['sepallen'], iris_features['sepalwid'], 
-         iris_features['petallen'], iris_features['petalwid'], species)
-    )
-    db.commit()
-
-    # Get all new corrections to update corrections.html
-    new_corrections = db.execute(
-        "SELECT sepallen, sepalwid, petallen, petalwid, species "
-        "FROM iris "
-        "WHERE model LIKE 'knn'"
-    ).fetchall()
-
-    # Model can now be retrained
-    session['retrained'] = False
-
-    # Convert to list of dicts for JSON serialization
-    all_corrections = [dict(row) for row in new_corrections]
-
-    return render_template('corrections.html', 
-                           corrections=all_corrections, 
-                           index=SPECIES)
-
 def knn_retrain(features, targets):
+    """
+    Trains a new KNN model
+
+    Parameters: features - feature data to train on
+                targets - target data corresponding to the feature data
+    """
+
     ## NOTE: Look into incremental learning
     from numpy.random import permutation
     from sklearn.neighbors import KNeighborsClassifier
@@ -161,6 +141,12 @@ def knn_retrain(features, targets):
 
 @iris_bp.route('/knn/retrain_and_visualize', methods=['POST'])
 def knn_retrain_and_visualize():
+    """
+    Retrains a KNN model and creates heatmaps to visualize the new model
+
+    Takes all original iris data and all corrections for the KNN model
+    to retrain the KNN model
+    """
     session['retrained'] = True
 
     socketio.emit('retraining-status', {'message': 'Obtaining data...'})
@@ -205,6 +191,8 @@ def knn_retrain_and_visualize():
 
 @iris_bp.route('/dtree', methods=['GET'])
 def dtree_classifier():
+    """View the page for the decision tree iris classifier"""
+
     clean_files(classify='iris', model='dtree')
 
     db = get_db()
@@ -226,7 +214,17 @@ def dtree_classifier():
                            model='dtree')
 
 def model_visualization(db, model, features = None):
-    """Create images to visualize models"""
+    """
+    Creates heatmaps to visualize models
+    
+    There are two heatmaps: the sepal and petal plane.
+    The sepal plane keeps the sepal features constant, while
+    the petal plane keeps the petal features constant.
+
+    By default, these planes use the average sepal/petal length
+    and width for constant values. However, if the features
+    parameter is specified, it will use those instead.
+    """
     
     # Handle correctly sending status messages for socketio
     if features is not None:
@@ -383,6 +381,7 @@ def model_visualization(db, model, features = None):
 
 def get_averages(db, model):
     """Calculate average feature values for all data"""
+
     socketio.emit('retraining-status', {'message': 'Calculating averages...'})
     print("Calculating averages...")
     
@@ -433,6 +432,12 @@ def get_averages(db, model):
 
 @iris_bp.route('/clear_corrections', methods = ['POST'])
 def clear_corrections():
+    """
+    Clears all corrections for a specified model
+
+    Deletes all data for the specified model in the database
+    and updates the web page's correction list 
+    """
     data = request.json
     model = data['model']
     
@@ -463,3 +468,50 @@ def clear_corrections():
 
     return jsonify({"corrections": render_template('corrections.html'),
                     "retrain_plots": render_template('iris/irisRetrainPlots.html')})
+
+@iris_bp.route('/incorrect', methods=["POST"])
+def incorrect():
+    """
+    Handles corrections submitted by user for when the model is wrong.
+
+    Stores the corrections in the database (with model specified) and
+    updates the corrections list seen on the web page.
+    """
+    # Get species index
+    data = request.json
+    species = SPECIES_INDEX[data['correction']]
+
+    # Get model
+    model = data['model']
+    
+    # Get inputted features from session
+    iris_features = session['iris_features']
+
+    # Add correction to database
+    db = get_db()
+
+    db.execute(
+        "INSERT INTO iris (sepallen, sepalwid, petallen, petalwid, species, model)"
+        "VALUES (?, ?, ?, ?, ?, ?)",
+        (iris_features['sepallen'], iris_features['sepalwid'], 
+         iris_features['petallen'], iris_features['petalwid'], 
+         species, model)
+    )
+    db.commit()
+
+    # Get all new corrections to update corrections.html
+    new_corrections = db.execute(
+        "SELECT sepallen, sepalwid, petallen, petalwid, species "
+        "FROM iris "
+        "WHERE model LIKE 'knn'"
+    ).fetchall()
+
+    # Model can now be retrained
+    session['retrained'] = False
+
+    # Convert to list of dicts for JSON serialization
+    all_corrections = [dict(row) for row in new_corrections]
+
+    return render_template('corrections.html', 
+                           corrections=all_corrections, 
+                           index=SPECIES)
