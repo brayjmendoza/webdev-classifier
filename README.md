@@ -4,7 +4,7 @@ This project combines web development with machine learning.
 This is a Flask app that can classify a variety of different things. As of now, it can only classify different iris species. On the web application, you just have to input feature data and it will return a prediction based on a model. If it is incorrect, you can tell the program, so it can retrain when desired.
 
 ### Classification
-For iris classification, the scikit-learn's iris dataset was used to train base models. As of now, there is only a k-Nearest Neighbors classifier. However, a decision tree will be added soon.
+For iris classification, the scikit-learn's iris dataset was used to train base models. As of now, there is a k-Nearest Neighbors classifier, and a decision tree classifier. More models can be easily added, and I plan on adding random forests next.
 
 In the future, I will continue to add additional models to classify the irises. I will also add different things to classify, such as digits and births. I will primarily be using popular datasets that people encounter when learning about data science and machine learning. 
 
