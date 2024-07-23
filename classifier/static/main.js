@@ -50,6 +50,7 @@ function correction(classType) {
             document.getElementById('correction').style.display='none';
             document.getElementById('feedback').innerText = 'An error occurred';
             document.getElementById('tryAgain').style.display='block';
+            document.getElementById('retrainButton').style.display = 'none';
         })
     });
 }
@@ -191,6 +192,7 @@ function clearCorrections(classType, model) {
             document.getElementById('correctionsPage').innerHTML = data["corrections"];
             document.getElementById('retrainPlots').innerHTML = data["retrain_plots"];
             document.getElementById('retrainButton').style.display = 'none';
+            document.getElementById('retrainStatus').innerText = '';
         })
         .catch(error => {
             console.error('Error:', error);

@@ -61,6 +61,7 @@
                   document.getElementById('prediction').innerText = `Iris Species: ${data["species"]}`;
                   document.getElementById('incorrect').style.display='block';
                   document.getElementById('retrainStatus').innerText='';
+                  document.getElementById('tryAgain').style.display = 'none';
                   if (data["images"]) {
                     // Create/update plots if specified
                     document.getElementById('classifyPlotContainer').innerHTML = data["images"];
