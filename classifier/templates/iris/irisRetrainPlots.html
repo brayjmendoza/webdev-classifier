@@ -1,6 +1,7 @@
 {% if session['retrained'] %}
   <h2 class="plot-header">Retrained Model</h2>
 
-  <img src="{{ url_for('static', filename='img/iris_' + model + '_sepal_new.png') }}" class="plot-images">
-  <img src="{{ url_for('static', filename='img/iris_' + model + '_petal_new.png') }}" class="plot-images">
+  {% for i in images %}
+    <img src="{{ url_for('static', filename=i) }}" class="plot-images">
+  {% endfor %}
 {% endif %}

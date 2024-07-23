@@ -4,7 +4,8 @@ from joblib import load
 
 #### CONSTANTS ####
 TEST_PERCENT = 0.2
-BEST_K = 9     # best k for knn model taken from previous cross-validation (CS35 hw5)
+BEST_K = 9      # best k for knn model taken from previous cross-validation (CS35 hw5)
+BEST_DEPTH = 3  # best depth for dtree model taken from previous cross-validation (CS35 hw6)
 
 def load_knn_model():
     """Load the iris KNN model"""

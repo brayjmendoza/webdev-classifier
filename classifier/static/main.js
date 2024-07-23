@@ -106,6 +106,8 @@ function retrain(classType, model) {
             .then(data => {
                 document.getElementById('retrainStatus').innerText = "Success!";
                 document.getElementById('retrainPlots').innerHTML = data;
+                
+                console.log(data)
 
                 // Prevent images from caching so they are properly updated in real time
                 const images = document.getElementById('retrainPlots').getElementsByTagName('img');

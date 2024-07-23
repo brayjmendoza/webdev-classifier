@@ -1,12 +1,12 @@
 <!-- Heatmap visualizations for a prediction with given features -->
 {% if instancePlotExists %} <!-- Only display if there is a plot -->
-  <h3 class="classify-plot-header">Visualization of Classification</h3>
+  <h3 class="classify-plot-header">Visualization of Classification Planes</h3>
   <div class="classify-plot">
     <div class="classify-plot-image">
-      <img src="{{ url_for('static', filename='img/this_iris_' + model + '_sepal.png') }}">
+      <img src="{{ url_for('static', filename='img/this_iris_sepal.png') }}">
     </div>
     <div class="classify-plot-image">
-      <img src="{{ url_for('static', filename='img/this_iris_' + model + '_petal.png') }}">
+      <img src="{{ url_for('static', filename='img/this_iris_petal.png') }}">
     </div>
   </div>
 {% endif %}
