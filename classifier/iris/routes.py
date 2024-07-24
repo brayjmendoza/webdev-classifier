@@ -22,7 +22,7 @@ FEATURES_INDEX = {'sepallen':0,'sepalwid':1,'petallen':2,'petalwid':3}
 
 @iris_bp.route('/')
 def iris():
-    return render_template('iris/iris.html')
+    return render_template('iris/home.html')
 
 
 ###################
@@ -532,9 +532,9 @@ def heatmap_visualization(model, features = None):
         plane_sepallen, plane_sepalwid, plane_petallen, plane_petalwid = get_averages('knn')
 
     ## We can only plot 2 dimensions at a time!
-    from seaborn import set, heatmap
+    from seaborn import set_theme, heatmap
     from matplotlib import use
-    from matplotlib.pyplot import clf
+    from matplotlib.pyplot import clf, figure
     from matplotlib.patches import Rectangle
 
 
@@ -561,7 +561,7 @@ def heatmap_visualization(model, features = None):
         row = 0
         col += 1
 
-    set(rc = {'figure.figsize':(12,8)})  # figure size!
+    figure(figsize=(12,8))
     sepal = heatmap(PLANE, cbar_kws={'ticks': [0, 1, 2]})
     sepal.invert_yaxis() # to match our usual direction
     sepal.set(xlabel="Petal Width (mm)", ylabel="Petal Length (mm)")
@@ -608,7 +608,6 @@ def heatmap_visualization(model, features = None):
     clf() # clear figure to create next plot
 
 
-
     ####### Petal Plane #######
 
     socketio.emit(status, {'message': 'Working on petal plane...'})
@@ -625,7 +624,7 @@ def heatmap_visualization(model, features = None):
         row = 0
         col += 1
 
-    set(rc = {'figure.figsize':(12,8)})  # figure size!
+    figure(figsize=(12,8))
     petal = heatmap(PLANE, cbar_kws={'ticks': [0, 1, 2]})
     petal.invert_yaxis() # to match our usual direction
     petal.set(xlabel="Sepal Width (mm)", ylabel="Sepal Length (mm)")
