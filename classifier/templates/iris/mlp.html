@@ -1,0 +1,52 @@
+{% extends 'iris/irisBase.html' %}
+
+{% block subtitle %}
+  - Multi-Layer Perceptron
+{% endblock %}
+
+{% block subcontent %}
+
+  {% include 'iris/irisForm.html' %}
+
+  <!-- Retrain Button -->
+  <div class="retraining">
+    <button id="retrainButton" class ="retrain-button" type="button">
+      Retrain with Corrections
+    </button>
+  
+    <p id="retrainStatus" class="retrain-status"></p>
+  </div>
+
+  {% if session['retrained'] or not corrections %}
+  <!-- For displaying retrain button -->
+    <script>
+        document.getElementById('retrainButton').style.display = 'none';
+    </script>
+  {% endif %}
+  
+  <div id="correctionsPage" class="corrections-page">
+    {% include 'corrections.html' %}
+  </div>
+
+  <h2 class="visualize-header">Model Visualization</h2>
+  <div class="plots">
+    <div class="base-plots">
+      <h2 class="plot-header">Base Model</h2>
+      <img src="{{ url_for('static', filename='img/iris_mlp_sepal.png') }}" class="plot-images">
+      <img src="{{ url_for('static', filename='img/iris_mlp_petal.png') }}" class="plot-images">
+    </div>
+
+    <div id="retrainPlots" class="retrain-plots">
+      {% include 'iris/irisRetrainPlots.html' %}
+    </div>
+  </div>
+
+{% endblock %}
+{% block subjs %}
+  <script>
+    prediction('mlp');
+    correction('iris', 'mlp')
+    retrain('iris', 'mlp');
+    attachCorrectionListeners('iris', 'mlp')
+  </script>
+{% endblock %}

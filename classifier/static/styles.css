@@ -128,7 +128,7 @@ button:hover {
     box-shadow: 1px 5px 16px rgba(0,0,0,0.3);
     z-index: 2;
 
-    left: -50%;
+    left: -75%;
     right: 0px;
     padding: 8px;
 }

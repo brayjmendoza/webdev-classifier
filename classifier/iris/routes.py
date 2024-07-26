@@ -75,7 +75,7 @@ def knn_predict():
 
     # Determine if we need to plot
     last_key = list(data.keys())[-1]
-    visualize =  data.pop(last_key)
+    visualize = data.pop(last_key)
 
     # Store data in session to display on form
     session['iris_features'] = data
@@ -213,7 +213,7 @@ def dtree_predict():
 
     # Determine if we need to plot
     last_key = list(data.keys())[-1]
-    visualize =  data.pop(last_key)
+    visualize = data.pop(last_key)
 
     # Store data in session to display on form
     session['iris_features'] = data
@@ -317,6 +317,151 @@ def dtree_visualization(model):
     print('Created plot!')
 
     return [filename]
+
+###################
+### MLP FUNCIONS
+###################
+@iris_bp.route('/mlp', methods=['GET'])
+def mlp_classifier():
+    """View the page for the decision tree iris classifier"""
+
+    clean_files(classify='iris', model='mlp')
+
+    db = get_db()
+    corrections = db.execute(
+        "SELECT sepallen, sepalwid, petallen, petalwid, species "
+        "FROM iris "
+        "WHERE model LIKE 'mlp'"
+    ).fetchall()
+
+    # Keep track if the model can be retrained or not
+    if os.path.exists('classifier/models/iris/mlp_new.pkl'):
+        session['retrained'] = True
+    else:
+        session['retrained'] = False
+
+    return render_template('iris/mlp.html', 
+                           corrections=corrections, 
+                           index=SPECIES)
+
+@iris_bp.route('/mlp/predict', methods=['POST'])
+def mlp_predict():
+    """
+    Make an iris species prediction using the decision tree.
+    
+    Also creates tree plot visualizations for the given features
+    submitted on the web form if specified on the web page
+    """
+    # Load model
+    socketio.emit('classify-status', {'message': 'Loading model...'})
+    print('Loading model...')
+    sleep(0.1)
+    mlp = model_loader.load_mlp_model()  # k nearest neighbors model from hw5
+    socketio.emit('classify-status', {'message': 'Loaded!'})
+    print('Loaded!')
+
+    # Get data
+    socketio.emit('classify-status', {'message': 'Classifying...'})
+    data = request.json
+
+    # Determine if we need to plot
+    last_key = list(data.keys())[-1]
+    visualize = data.pop(last_key)
+
+    # Store data in session to display on form
+    session['iris_features'] = data
+
+    # Make prediction
+    Features = asarray([data['sepallen'],
+                data['sepalwid'],
+                data['petallen'],
+                data['petalwid']],
+                dtype=float)
+
+    prediction = mlp.predict([Features]) # returns an array
+    for i in range(len(prediction[0])): # get predicted species from array
+        if prediction[0][i] == 1:
+            prediction = SPECIES[i]
+    
+    if visualize:
+        heatmap_visualization(mlp, Features)
+        return jsonify({"species": prediction, 
+                        "images": render_template('iris/irisInstancePlots.html', 
+                                                    instancePlotExists=True)})
+    
+    return jsonify({"species": prediction})
+
+
+@iris_bp.route('/mlp/retrain_and_visualize', methods=['POST'])
+def mlp_retrain_and_visualize():
+    """
+    Retrains a dtree model and creates a tree plot to visualize it
+
+    Takes all original iris data and all corrections for the dtree model
+    to retrain it
+    """
+    session['retrained'] = True
+
+    # Get data
+    features, targets = get_all_data('mlp')
+
+    # Retrain model
+    new_model = mlp_retrain(features, targets)
+
+    # Create plots for visualization
+    image_path = heatmap_visualization(new_model)
+
+    return render_template('iris/irisRetrainPlots.html', images=image_path)
+
+def mlp_retrain(features, targets):
+    from numpy.random import permutation
+    from sklearn.neural_network import MLPClassifier
+    from sklearn.preprocessing import StandardScaler
+    from joblib import dump
+
+    # Scramble data to remove (potential) dependence on ordering
+    indices = permutation(len(targets))
+    features = features[indices]
+    targets = targets[indices]
+
+    # Define training and testing sets
+    # NOTE: look into training with cross-validation
+    from sklearn.model_selection import train_test_split
+    X_train, X_test, y_train, y_test = train_test_split(features, 
+                                                        targets, 
+                                                        test_size=model_loader.TEST_PERCENT)
+    
+    # Scale data
+    socketio.emit('retraining-status', {'message': 'Scaling data...'})
+    print("Scaling data...")
+    scaler = StandardScaler()
+    scaler.fit(X_train)
+    X_train_scaled = scaler.transform(X_train)
+    
+    # Train new model
+    socketio.emit('retraining-status', {'message': 'Retraining model...'})
+    print("Retraining model...")
+
+    # Same settings as base model
+    new_mlp_model = MLPClassifier(hidden_layer_sizes=(6,7),
+                                  max_iter=500,
+                                  shuffle=True,
+                                  learning_rate_init=1,
+                                  learning_rate='adaptive')
+    
+    new_mlp_model.fit(X_train_scaled, y_train)
+    socketio.emit('retraining-status', {'message': 'Trained!'})
+    print("Trained!")
+    
+    # Save new model
+    socketio.emit('retraining-status', {'message': 'Saving retrained model...'})
+    print("Saving retrained model...")
+    dump(new_mlp_model, 'classifier/models/iris/mlp_new.pkl')
+    socketio.emit('retraining-status', {'message': 'Saved!'})
+    print("Saved!")
+
+    return new_mlp_model
+
 
 #####################
 ## GENERAL FUNCTIONS
@@ -556,7 +701,11 @@ def heatmap_visualization(model, features = None):
         for petallen in HORIZONT: # for every petal length
             Features = [ plane_sepallen, plane_sepalwid, petallen, petalwid ]
             output = model.predict([Features])
-            PLANE[row,col] = int(round(output[0]))
+            try: # when output is an int
+                PLANE[row,col] = int(round(output[0]))
+            except: # when output is an array
+                for i in range(len(output[0])): # get predicted species from array
+                    PLANE[row,col] = i
             row += 1
         row = 0
         col += 1
@@ -607,7 +756,6 @@ def heatmap_visualization(model, features = None):
     
     clf() # clear figure to create next plot
 
-
     ####### Petal Plane #######
 
     socketio.emit(status, {'message': 'Working on petal plane...'})
@@ -619,7 +767,12 @@ def heatmap_visualization(model, features = None):
         for sepallen in HORIZONT: # for every sepal length
             Features = [ sepallen, sepalwid, plane_petallen, plane_petalwid ]
             output = model.predict([Features])
-            PLANE[row,col] = int(round(output[0]))
+            try: # when output is an int
+                PLANE[row,col] = int(round(output[0]))
+            except: # when output is an array
+                for i in range(len(output[0])): # get predicted species from array
+                    if output[0][i] == 1:
+                        PLANE[row,col] = i
             row += 1
         row = 0
         col += 1

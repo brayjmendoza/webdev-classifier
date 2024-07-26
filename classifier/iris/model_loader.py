@@ -30,3 +30,15 @@ def load_dtree_model():
     print(f"Using model: {path}")
 
     return load(path)
+
+def load_mlp_model():
+    """Load the iris mlp classifier"""
+    path="classifier/models/iris/mlp.pkl"
+
+    # Use retrained model if it exists
+    if exists("classifier/models/iris/mlp_new.pkl"):
+        path = 'classifier/models/iris/mlp_new.pkl'
+
+    print(f"Using model: {path}")
+
+    return load(path)
