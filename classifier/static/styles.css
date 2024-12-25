@@ -1,3 +1,4 @@
+/* GENERAL */
 body {
     margin: 0;
     padding: 0;
@@ -58,7 +59,7 @@ button:hover {
     margin: 15px;
 }
 
-/* NAVIGATION */
+/* SIDEBAR NAVIGATION */
 .nav-links {
     display: flex;
     overflow: hidden;
@@ -98,6 +99,36 @@ button:hover {
 
 .content.shifted {
     margin-left: 16%; /* Shift main content with sidebar */
+}
+
+/* MODEL HOMEPAGE STYLES */
+.home-subheader {
+    margin-left: 10px;
+    padding-top: 20px;
+    font-size: 1.8em;
+}
+
+.home-models {
+    margin-left: 10px;
+}
+
+.home-models h2 {
+    margin-bottom: 4px;
+    font-size: 1.5em;
+}
+
+.home-models a {
+    display: block;
+    text-decoration: none;
+    color: rgb(0, 94, 255);
+    padding-top: 3px;
+    padding-bottom: 3px;
+    padding-left: 15px;
+    font-size: 1.1em;
+}
+
+.home-models a:hover {
+    text-decoration: underline;
 }
 
 /* CLASSIFIER HEADER */

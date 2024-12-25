@@ -1,15 +1,12 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Classifiers</title>
-  </head>
-  <body>
-    <h1>CS35 Classifiers!!</h1>
-    <nav>
-        <h1>Classifiers</h1>
-        <ul>
-          <li><a href="{{ url_for('iris.iris') }}">Iris Classifiers</a>
-        </ul>
-      </nav>
-  </body>
-</html>
+{% extends 'base.html' %}
+
+{% block title %}Classifiers{% endblock %}
+
+{% block header %}
+  <h1 class="home-subheader">Welcome!</h1>
+
+  <div class="home-models">
+    <h2>Classifiers:</h2>
+      <a href="{{ url_for('iris.iris') }}">Iris Classifiers</a>
+  </div>
+{% endblock %}
