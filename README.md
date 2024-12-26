@@ -1,7 +1,9 @@
 ### Overview
-This project combines web development with machine learning.
+This project combines web development with machine learning and data visualization.
 
 This is a Flask app that can classify a variety of different things. As of now, it can only classify different iris species. On the web application, you just have to input feature data and it will return a prediction based on a model. If it is incorrect, you can tell the program, so it can retrain when desired.
+
+This project was done for an NSF-funded research project *Scripting For All* by Professor Dodds from Harvey Mudd College. The overall goal of this research is to expand the understanding of computer science to disciplines that traditionally don't use it. Computation is becoming an increasingly useful and necessary skill, and we'd love to make it more accessible to everyone. This webdev-classifier project is an example of a final project that students should have the ability to do after taking HMC's CS35 *Computing for Insight* course.
 
 ### Classification
 For iris classification, the scikit-learn's iris dataset was used to train base models. As of now, there are three different classifiers: k-Nearest Neighbors, decision tree, multi-layer perceptron. More models can be easily added.
@@ -20,7 +22,7 @@ It can be hard to truly visualize how a model makes its classifications. So, gra
 For example, let's use the KNN model for irises. The iris models have four-dimensions (sepal length, sepal width, petal length, petal width). Since we can't visualize two dimensions, two plots are used to visualize them. One plot is a heatmap for the sepal plane, where sepal length and width are held constant; and the other heatmap is for the petal plane, where the petal length and width are held constant. The model visualizations at the bottom of the page choose the average values of all the data as constants. However, by toggling the visualize button in the classification form, the feature values that you inputted will be used as constants for these planes. Furthermore, these heatmaps will highlight your iris on the generated heatmaps. This allows you to visualize your iris in context, making it easier to understand how the models are deciding.
 
 ### Commands
-I also has a number of utility commands for this project
+I also have a number of utility commands for this project
 
 `init-db` - Initializes the database. MUST BE RUN BEFORE RUNNING THE APP FOR THE VERY FIRST TIME
 `clean` - Cleans all files created at runtime
