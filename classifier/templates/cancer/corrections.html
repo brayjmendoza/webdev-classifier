@@ -1,0 +1,49 @@
+<!-- List Corrections -->
+{% if corrections %}
+  <div class="corrections-btns">
+    <button class="corrections-header" id="correctionsHeader">Corrections
+      <i id="caret" class="fa fa-caret-down"></i>
+    </button>
+    <div id="clearCorrectionsContainer" class="clear-corrections-container">
+      <button class="clear-corrections-btn" id="clearCorrectionsButton">
+        Clear Corrections
+      </button>
+      <p id="clearCorrectionsStatus"></p>
+    </div>
+  </div>
+
+  <div class="corr-table-container" id="correctionsTableContainer">
+    <table class="corrections-table" id="correctionsTable">
+      <thead class="corr-table-head">
+        <th>Radius</th>
+        <th>Texture</th>
+        <th>Perimeter</th>
+        <th>Smoothness</th>
+        <th>Compactness</th>
+        <tr>
+          <td colspan="5">
+            <hr>
+          </td>
+        </tr>
+      </thead>
+      <tbody class="corr-table-body">
+        {% for c in corrections %}
+          <tr>
+            <td>{{ c['sepallen'] }}</td>
+            <td>{{ c['sepalwid'] }}</td>
+            <td>{{ c['petallen'] }}</td>
+            <td>{{ c['petalwid'] }}</td>
+            <td>{{ index[c['species']] }}</td>
+          </tr>
+          {% if not loop.last %}
+            <tr>
+              <td colspan="5">
+                <hr>
+              </td>
+            </tr>
+          {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endif %}

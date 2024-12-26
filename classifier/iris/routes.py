@@ -14,7 +14,7 @@ from sklearn.datasets import load_iris
 
 iris_bp = Blueprint('iris', __name__)
 
-# Keep track of species/features indices
+# Keep track of target/feature indices
 SPECIES = ['setosa','versicolor','virginica']   # int to str
 SPECIES_INDEX = {'setosa':0,'versicolor':1,'virginica':2}  # str to int
 FEATURES = ['sepallen', 'sepalwid', 'petallen', 'petalwid']
@@ -645,7 +645,7 @@ def incorrect():
     # Convert to list of dicts for JSON serialization
     all_corrections = [dict(row) for row in new_corrections]
 
-    return render_template('corrections.html', 
+    return render_template('iris/rcorrections.html', 
                            corrections=all_corrections, 
                            index=SPECIES)
 

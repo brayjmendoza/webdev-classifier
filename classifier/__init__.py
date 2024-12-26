@@ -34,7 +34,9 @@ def create_app(test_config = None):
     
     # Register classification blueprints
     from classifier.iris.routes import iris_bp
+    from classifier.cancer.routes import cancer_bp
     app.register_blueprint(iris_bp, url_prefix='/iris')
+    app.register_blueprint(cancer_bp, url_prefix='/cancer')
 
     # Register additional utility commands
     from . import commands

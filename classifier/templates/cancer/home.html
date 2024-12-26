@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1 class="home-subheader">{% block title %}Cancer Classifiers{% endblock %}</h1>
+  
+  <!-- Navigation -->
+  <div class="home-models">
+    <h2>Models:</h2>
+      <a href="{{ url_for('cancer.knn_classifier') }}">Nearest Neighbor</a>
+      <a href="{{ url_for('iris.dtree_classifier') }}">Decision Tree</a>
+      <a href="{{ url_for('iris.mlp_classifier') }}">Multi-Layer Perceptron</a>
+  </div>
+{% endblock %}

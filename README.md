@@ -6,7 +6,9 @@ This is a Flask app that can classify a variety of different things. As of now, 
 ### Classification
 For iris classification, the scikit-learn's iris dataset was used to train base models. As of now, there are three different classifiers: k-Nearest Neighbors, decision tree, multi-layer perceptron. More models can be easily added.
 
-In the future, I will continue to add additional models to classify the irises. I will also add different things to classify, such as digits and births. I will primarily be using popular datasets that people encounter when learning about data science and machine learning. 
+In the future, I will continue to add additional models to classify the irises. I will also add different things to classify, such as digits and births. I will primarily be using popular datasets that people encounter when learning about data science and machine learning.
+
+The training for all of the initial models was done in initial_models.ipynb. That being said, some of the values for the iris models were done separately in a homework assignment from Harvey Mudd College's CS35 taught by Professor Dodds.
 
 ### Model Correction
 Models are never always correct. So, if the model makes a wrong prediction, you can correct it. The program will then store

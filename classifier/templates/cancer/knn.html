@@ -1,4 +1,4 @@
-{% extends 'iris/irisBase.html' %}
+{% extends 'cancer/cancerBase.html' %}
 
 {% block subtitle %}
   - Nearest Neighbor
@@ -6,7 +6,7 @@
 
 {% block subcontent %}
 
-  {% include 'iris/irisForm.html' %}
+  {% include 'cancer/cancerForm.html' %}
 
   <!-- Retrain Button -->
   <div class="retraining">
@@ -25,7 +25,7 @@
   {% endif %}
   
   <div id="correctionsPage" class="corrections-page">
-    {% include 'iris/corrections.html' %}
+    {% include 'cancer/corrections.html' %}
   </div>
 
   <h2 class="visualize-header">Model Visualization</h2>
@@ -45,8 +45,8 @@
 {% block subjs %}
   <script>
     prediction('knn');
-    correction('iris', 'knn')
-    retrain('iris', 'knn');
-    attachCorrectionListeners('iris', 'knn')
+    correction('cancer', 'knn')
+    retrain('cancer', 'knn');
+    attachCorrectionListeners('cancer', 'knn')
   </script>
 {% endblock %}

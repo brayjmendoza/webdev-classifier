@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <div class="classifier-subheader">
+    <h1>{% block title %}Cancer Classifiers {% block subtitle %}{% endblock %}{% endblock %}</h1>
+    
+    <!-- Navigation -->
+    <div class="model-nav">
+      <button class="model-dropdown-btn">
+        Models
+        <i class="fa fa-caret-down"></i>
+      </button>
+      <div class="model-links">
+        <a href="{{ url_for('cancer.knn_classifier') }}">Nearest Neighbor</a>
+        <a href="{{ url_for('iris.dtree_classifier') }}">Decision Tree</a>
+        <a href="{{ url_for('iris.mlp_classifier') }}">Multi-Layer Perceptron</a>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block content %}
+  
+  {% block subcontent %}{% endblock %}
+
+{% endblock %}
+{% block js %}
+  <!-- General JavaScript-->
+  <script>
+  function prediction(modelType) {
+    /* Send feature data to backend to make a prediction
+     modelType is the model to be used */
+
+      document.addEventListener('DOMContentLoaded', (event) => {
+          // Connect to the Socket.IO server
+          const socket = io();
+
+          // Handle the 'status' event from the server
+          socket.on('classify-status', function(data) {
+              document.getElementById('prediction').innerText = data.message;
+          });
+
+          let path = `${modelType}/predict`;
+          document.getElementById('cancerForm').addEventListener('submit', function(e) {
+              e.preventDefault();
+              // Feature means
+              const radius = document.getElementById('radius').value;
+              const texture = document.getElementById('texture').value;
+              const perimeter = document.getElementById('perimeter').value;
+              const area = document.getElementById('area').value;
+              const smoothness = document.getElementById('smoothness').value;
+              const compactness = document.getElementById('compactness').value;
+              const concavity = document.getElementById('concavity').value;
+              const concave_points = document.getElementById('concave-points').value;
+              const symmetry = document.getElementById('symmetry').value;
+              const fractal_dimension = document.getElementById('fractal-dimension').value;
+              const visualize = document.getElementById('visualize').checked;
+
+              fetch(path, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ radius, texture, perimeter, area, smoothness,
+                                         compactness, concavity, concave_points,
+                                         symmetry, fractal_dimension, visualize
+                   })
+              })
+              .then(response => response.json())
+              .then(data => {
+                  document.getElementById('prediction').innerText = `Tumor Cell Type: ${data["species"]}`;
+                  document.getElementById('incorrect').style.display='block';
+                  document.getElementById('retrainStatus').innerText='';
+                  document.getElementById('tryAgain').style.display = 'none';
+                  if (data["images"]) {
+                    // Create/update plots if specified
+                    document.getElementById('classifyPlotContainer').innerHTML = data["images"];
+
+                    // Prevent images from caching so they are properly updated in real time
+                    const images = document.getElementById('classifyPlotContainer').getElementsByTagName('img');
+                    for (let i = 0; i < images.length; i++) {
+                        const img = images[i];
+                        const src = img.src.split('?')[0]; // Remove existing query parameters
+
+                        // Use timestamp as query parameter for unique URL
+                        img.src = src + '?t=' + new Date().getTime(); 
+                    }
+                  }
+              })
+              .catch(error => {
+                  console.error('Error: ', error);
+                  document.getElementById('prediction').innerText = 'An error occurred';
+                  document.getElementById('retrainStatus').innerText='';
+              });
+          });
+      });
+  }
+  </script>
+
+  {% block subjs %}{% endblock %}
+
+{% endblock %}
