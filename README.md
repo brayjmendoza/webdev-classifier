@@ -24,7 +24,7 @@ For example, let's use the KNN model for irises. The iris models have four-dimen
 ### Commands
 I also have a number of utility commands for this project
 
-`init-db` - Initializes the database. MUST BE RUN BEFORE RUNNING THE APP FOR THE VERY FIRST TIME
+`init-db` - Initializes the database. **MUST BE RUN BEFORE RUNNING THE APP FOR THE VERY FIRST TIME**
 `clean` - Cleans all files created at runtime
 `reset-app` - Re-initalizes the database and cleans up all files created at runtime
 `reset-iris`- Clears the iris table in the database and cleans all iris-related files created a runtime
@@ -37,3 +37,10 @@ flask --app classifier run
 ```
 
 You can optionally choose which port to use with the `--port` flag.
+
+We can also run the custom commands in a similar way:
+```shell
+flask --app classifier <command>
+```
+
+This will run `<command>` as explained above. Be sure to run the `init-db` command before running the app for the first time.
