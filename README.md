@@ -26,3 +26,12 @@ I also has a number of utility commands for this project
 `clean` - Cleans all files created at runtime
 `reset-app` - Re-initalizes the database and cleans up all files created at runtime
 `reset-iris`- Clears the iris table in the database and cleans all iris-related files created a runtime
+
+### Running the Flask App
+First, install the necessary dependencies found in requirements.txt (either in a global or virtual environment). Then simply run the following command to run the flask app:
+
+```shell
+flask --app classifier run
+```
+
+You can optionally choose which port to use with the `--port` flag.
