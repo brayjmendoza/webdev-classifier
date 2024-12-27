@@ -29,7 +29,7 @@ function correction(classType, model) {
 
     document.getElementById('correction').addEventListener('submit', function(e) {
         e.preventDefault(); // prevents reload
-        const correction = document.getElementById('species').value;
+        const correction = document.getElementById('target').value;
         
         // Store state of corrections table (for display purposes)
         let isExpanded;

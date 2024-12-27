@@ -7,7 +7,7 @@ from flask import (
 from classifier import socketio  # to give loading messages when clicking buttons
 
 from classifier.commands import clean_files
-from classifier.iris import model_loader
+from classifier.cancer import model_loader
 from classifier.database.db import get_db
 from numpy import asarray, array, reshape, concatenate, arange, zeros, size
 from sklearn.datasets import load_iris
@@ -48,7 +48,7 @@ def knn_classifier():
     db = get_db()
     corrections = db.execute(
         "SELECT * "
-        "FROM cancer_features "
+        "FROM cancer_data "
         "WHERE model LIKE 'knn'"
     ).fetchall()
 
@@ -106,11 +106,69 @@ def knn_predict():
     prediction = knn_model.predict([Features])
     prediction = int(round(prediction[0]))  # unpack the extra brackets
     prediction = TARGET[prediction]  # change to string
-    
+
     if visualize:
         # heatmap_visualization(knn_model, Features)
-        return jsonify({"species": prediction, 
+        return jsonify({"cell_type": prediction, 
                         "images": render_template('iris/irisInstancePlots.html',
                                                     instancePlotExists=True)})
     
-    return jsonify({"species": prediction})
+    return jsonify({"cell_type": prediction})
+
+
+
+#####################
+## GENERAL FUNCTIONS
+#####################
+
+@cancer_bp.route('/incorrect', methods=["POST"])
+def incorrect():
+    """
+    Handles corrections submitted by user for when the model is wrong.
+
+    Stores the corrections in the database (with model specified) and
+    updates the corrections list seen on the web page.
+    """
+    # Get species index
+    data = request.json
+    cell_type = TARGET_INDEX[data['correction']]
+
+    # Get model
+    model = data['model']
+    
+    # Get inputted features from session
+    cancer_features = session['cancer_features']
+
+    # Add correction to database
+    db = get_db()
+
+    db.execute(
+        "INSERT INTO cancer (radius, texture, perimeter, area, smoothness, "
+        "compactness, concavity, concave_points, symmetry, fractal, "
+        "cell_type, model)"
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (cancer_features['radius'], cancer_features['texture'], 
+         cancer_features['perimeter'], cancer_features['area'], 
+         cancer_features['smoothness'], cancer_features['compactness'], 
+         cancer_features['concavity'], cancer_features['concave_points'], 
+         cancer_features['symmetry'], cancer_features['fractal_dimension'], 
+         cell_type, model)
+    )
+    db.commit()
+
+    # Get all new corrections to update corrections.html
+    new_corrections = db.execute(
+        "SELECT * "
+        "FROM cancer_data "
+        "WHERE model LIKE ?", (model, )
+    ).fetchall()
+
+    # Model can now be retrained
+    session['retrained'] = False
+
+    # Convert to list of dicts for JSON serialization
+    all_corrections = [dict(row) for row in new_corrections]
+
+    return render_template('cancer/corrections.html', 
+                           corrections=all_corrections, 
+                           index=TARGET)

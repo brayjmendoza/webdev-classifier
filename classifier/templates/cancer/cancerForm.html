@@ -47,13 +47,13 @@
         </div>
         <div class="classify-form-element">
             <label for="symmetry">Symmetry:</label>
-            <input name="concave-points" id="concave-points"
-                    value="{{ request.form['concave-points'] or '' }}" required>
+            <input name="symmetry" id="symmetry"
+                    value="{{ request.form['symmetry'] or '' }}" required>
         </div>
         <div class="classify-form-element">
             <label for="fractal-dimension">Fractal Dimension:</label>
-            <input name="fractal-dimension-points" id="fractal-dimension-points"
-                    value="{{ request.form['fractal-dimension-points'] or '' }}" required>
+            <input name="fractal-dimension" id="fractal-dimension"
+                    value="{{ request.form['fractal-dimension'] or '' }}" required>
         </div>
         <div class="classify-form-button">
           <button type="submit"
@@ -91,13 +91,12 @@
         <div class="correcting-form">
           <form id="correction" method="post" style="display: none">
   
-            <p class="correcting-form-header">What is the correct species?</p>
+            <p class="correcting-form-header">What is the correct cell type?</p>
             
             <div class="correcting-form-content">
-              <select name="species" id="species" class="correcting-dropdown">
-                <option value="setosa">setosa</option>
-                <option value="versicolor">versicolor</option>
-                <option value="virginica">virginica</option>
+              <select name="target" id="target" class="correcting-dropdown">
+                <option value="malignant">malignant</option>
+                <option value="benign">benign</option>
               </select>
   
               <button type="submit" class="correcting-submit">Submit</button>

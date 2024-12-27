@@ -18,10 +18,16 @@
         <th>Radius</th>
         <th>Texture</th>
         <th>Perimeter</th>
+        <th>Area</th>
         <th>Smoothness</th>
         <th>Compactness</th>
+        <th>Concavity</th>
+        <th>Cancave Points</th>
+        <th>Symmetry</th>
+        <th>Fractal Dimension</th>
+        <th>Cell Type</th>
         <tr>
-          <td colspan="5">
+          <td colspan="11">
             <hr>
           </td>
         </tr>
@@ -29,11 +35,17 @@
       <tbody class="corr-table-body">
         {% for c in corrections %}
           <tr>
-            <td>{{ c['sepallen'] }}</td>
-            <td>{{ c['sepalwid'] }}</td>
-            <td>{{ c['petallen'] }}</td>
-            <td>{{ c['petalwid'] }}</td>
-            <td>{{ index[c['species']] }}</td>
+            <td>{{ c['radius'] }}</td>
+            <td>{{ c['texture'] }}</td>
+            <td>{{ c['perimeter'] }}</td>
+            <td>{{ c['area'] }}</td>
+            <td>{{ c['smoothness'] }}</td>
+            <td>{{ c['compactness'] }}</td>
+            <td>{{ c['concavity'] }}</td>
+            <td>{{ c['concave_points'] }}</td>
+            <td>{{ c['symmetry'] }}</td>
+            <td>{{ c['fractal'] }}</td>
+            <td>{{ index[c['cell_type']] }}</td>
           </tr>
           {% if not loop.last %}
             <tr>

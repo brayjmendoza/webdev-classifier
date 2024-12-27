@@ -612,8 +612,6 @@ def incorrect():
     data = request.json
     species = SPECIES_INDEX[data['correction']]
 
-    print(data)
-
     # Get model
     model = data['model']
     
@@ -645,7 +643,7 @@ def incorrect():
     # Convert to list of dicts for JSON serialization
     all_corrections = [dict(row) for row in new_corrections]
 
-    return render_template('iris/rcorrections.html', 
+    return render_template('iris/corrections.html', 
                            corrections=all_corrections, 
                            index=SPECIES)
 
