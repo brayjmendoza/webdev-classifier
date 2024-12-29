@@ -11,6 +11,10 @@ from classifier.iris import model_loader
 from classifier.database.db import get_db
 from numpy import asarray, array, reshape, concatenate, arange, zeros, size
 from sklearn.datasets import load_iris
+from seaborn import set_theme, heatmap
+from matplotlib import use
+from matplotlib.pyplot import clf, figure
+from matplotlib.patches import Rectangle, Patch
 
 iris_bp = Blueprint('iris', __name__)
 
@@ -597,7 +601,7 @@ def clear_corrections():
     print("Cleared!")
     sleep(0.5)
 
-    return jsonify({"corrections": render_template('corrections.html'),
+    return jsonify({"corrections": render_template('iris/corrections.html'),
                     "retrain_plots": render_template('iris/irisRetrainPlots.html')})
 
 @iris_bp.route('/incorrect', methods=["POST"])
@@ -660,26 +664,22 @@ def heatmap_visualization(model, features = None):
     parameter is specified, it will use those instead.
     """
     
-    # Handle correctly sending status messages for socketio
     if features is not None:
+         # Handle correctly sending status messages for socketio
         status = 'classify-status'
-    else:
-        status = 'retraining-status'
 
-    if features is not None:
         plane_sepallen = features[0]
         plane_sepalwid = features[1]
         plane_petallen = features[2] 
         plane_petalwid = features[3]
     else:
+         # Handle correctly sending status messages for socketio
+        status = 'retraining-status'
+
         plane_sepallen, plane_sepalwid, plane_petallen, plane_petalwid = get_averages('knn')
 
-    ## We can only plot 2 dimensions at a time!
-    from seaborn import set_theme, heatmap
-    from matplotlib import use
-    from matplotlib.pyplot import clf, figure
-    from matplotlib.patches import Rectangle
-
+    
+    ### NOTE: We can only plot 2 dimensions at a time!
 
     # Select matplotlib backend to allow for plot creation
     use('agg')

@@ -9,8 +9,12 @@ from classifier import socketio  # to give loading messages when clicking button
 from classifier.commands import clean_files
 from classifier.cancer import model_loader
 from classifier.database.db import get_db
-from numpy import asarray, array, reshape, concatenate, arange, zeros, size
-from sklearn.datasets import load_iris
+import numpy as np
+from sklearn.datasets import load_breast_cancer
+from matplotlib import use
+from matplotlib.pyplot import suptitle, tight_layout, subplots, clf
+from seaborn import heatmap
+from matplotlib.patches import Patch, Rectangle
 
 cancer_bp = Blueprint('cancer', __name__)
 
@@ -43,7 +47,7 @@ def knn_classifier():
     """View the page for the k-nearest neighbors cancer classifier"""
 
     # Clear knn models/plots created from past use
-    clean_files(classify='iris', model='knn')
+    clean_files(classify='cancer', model='knn')
 
     db = get_db()
     corrections = db.execute(
@@ -53,7 +57,7 @@ def knn_classifier():
     ).fetchall()
 
     # Keep track if the model can be retrained or not
-    if os.path.exists('classifier/models/iris/knn_new.pkl'):
+    if os.path.exists('classifier/models/cancer/knn_new.pkl'):
         session['retrained'] = True
     else:
         session['retrained'] = False
@@ -91,7 +95,7 @@ def knn_predict():
     session['cancer_features'] = data
 
     # Make prediction
-    Features = asarray([data['radius'],
+    Features = np.asarray([data['radius'],
                 data['texture'],
                 data['perimeter'],
                 data['area'],
@@ -108,13 +112,75 @@ def knn_predict():
     prediction = TARGET[prediction]  # change to string
 
     if visualize:
-        # heatmap_visualization(knn_model, Features)
+        heatmap_visualization(knn_model, get_all_data('knn', 'classify-status')[0], Features)
         return jsonify({"cell_type": prediction, 
-                        "images": render_template('iris/irisInstancePlots.html',
+                        "images": render_template('cancer/cancerInstancePlots.html',
                                                     instancePlotExists=True)})
     
     return jsonify({"cell_type": prediction})
 
+@cancer_bp.route('/knn/retrain_and_visualize', methods=['POST'])
+def knn_retrain_and_visualize():
+    """
+    Retrains a KNN model and creates heatmaps to visualize the new model
+
+    Takes all original breast ancer data and all corrections for the KNN model
+    to retrain the KNN model
+    """
+    session['retrained'] = True
+
+    # Get data
+    features, targets = get_all_data('knn', 'retraining-status')
+
+    # Retrain model
+    new_model = knn_retrain(features, targets)
+
+    # Create plots for visualization
+    image_paths = heatmap_visualization(new_model, features)
+
+    return render_template('iris/irisRetrainPlots.html', images = image_paths)
+
+def knn_retrain(features, targets):
+    """
+    Trains a new KNN model
+
+    Parameters: features - feature data to train on
+                targets - target data corresponding to the feature data
+
+    Returns:    The new model
+    """
+
+    ## NOTE: Look into incremental learning
+    from numpy.random import permutation
+    from sklearn.neighbors import KNeighborsClassifier
+    from joblib import dump
+
+    # Scramble data to remove (potential) dependence on ordering
+    indices = permutation(len(targets))
+    features = features[indices]
+    targets = targets[indices]
+
+    ##### Since the dataset is small, we will use all data
+    # Define training and testing sets
+    # from sklearn.model_selection import train_test_split
+    # X_train, X_test, y_train, y_test = train_test_split(all_features, all_targets)
+    
+    # Train new model
+    socketio.emit('retraining-status', {'message': 'Retraining model...'})
+    print("Retraining model...")
+    new_knn_model = KNeighborsClassifier(n_neighbors=model_loader.BEST_K)
+    new_knn_model.fit(features, targets)
+    socketio.emit('retraining-status', {'message': 'Trained!'})
+    print("Trained!")
+    
+    # Save new model
+    socketio.emit('retraining-status', {'message': 'Saving retrained model...'})
+    print("Saving retrained model...")
+    dump(new_knn_model, 'classifier/models/cancer/knn_new.pkl')
+    socketio.emit('retraining-status', {'message': 'Saved!'})
+    print("Saved!")
+
+    return new_knn_model
 
 
 #####################
@@ -172,3 +238,228 @@ def incorrect():
     return render_template('cancer/corrections.html', 
                            corrections=all_corrections, 
                            index=TARGET)
+
+@cancer_bp.route('/clear_corrections', methods = ['POST'])
+def clear_corrections():
+    """
+    Clears all corrections for a specified model
+
+    Deletes all data for the specified model in the database
+    and updates the web page's correction list 
+    """
+    data = request.json
+    model = data['model']
+    
+    socketio.emit('clear-status', {'message': 'Clearing data...'})
+    print("Clearing data...")
+
+    # Clear data for given model
+    db = get_db()
+    db.execute(
+        "DELETE FROM cancer "
+        "WHERE model LIKE ?", (model, )
+    )
+    db.commit()
+
+    # Delete retrained model and plots (since there are no more corrections)
+    retrained_model_path = f'classifier/models/cancer/{model}_new.pkl'
+    if os.path.exists(retrained_model_path):
+        os.remove(retrained_model_path)
+        os.remove(f'classifier/static/img/cancer_{model}_new.png')
+
+    session['retrained'] = False
+
+
+    socketio.emit('clear-status', {'message': 'Cleared!'})
+    print("Cleared!")
+    sleep(0.5)
+
+    return jsonify({"corrections": render_template('cancer/corrections.html'),
+                    "retrain_plots": render_template('cancer/cancerRetrainPlots.html')})
+
+
+def get_all_data(model, status):
+    """
+    Gets all available cancer data.
+
+    Includes the base cancer dataset and any corrections for model
+    found in the database
+    """
+    socketio.emit(status, {'message': 'Obtaining data...'})
+    print('Obtaining data...')
+
+    db = get_db()
+    cancer_data = load_breast_cancer()
+
+    # Get pre-existing feature and target data from dataset
+    feature_data = cancer_data['data'][:, :10] # only get the data for means
+    target_data = cancer_data['target']
+
+    # Get new features and target data from database
+    new_features = db.execute(
+        "SELECT radius, texture, perimeter, area, smoothness, "
+        "compactness, concavity, concave_points, symmetry, fractal "
+        "FROM cancer "
+        "WHERE model LIKE ?", (model, )
+    ).fetchall()
+    new_targets = db.execute(
+        "SELECT cell_type FROM cancer "
+        "WHERE model LIKE ?", (model, )
+    ).fetchall()
+
+    # Format as numpy array
+    new_features = np.array(new_features, dtype='float64')
+    new_targets = np.array(new_targets, dtype='float64')
+    new_targets = np.reshape(new_targets, -1)  # convert to 1D array
+
+    # Combine all features and target data
+    all_features = np.concatenate((feature_data, new_features))
+    all_targets = np.concatenate((target_data, new_targets))
+
+    socketio.emit(status, {'message': 'Obtained all data!'})
+    print("Obtained all data!")
+
+    return all_features, all_targets
+
+def heatmap_visualization(model, data, features = None):
+    """
+    Creates a 5x5 grid of pairwise heatmaps to visualize models,
+    thus 25 planes are visualized
+    
+    Certain features were selected for the x- and y-axes:
+    x-axis: mean radius, mean perimeter, mean area, mean texture, mean smoothness
+    y-axis: mean compactness, mean concavity, mean concave points, mean symmetry, mean fractal dimension
+
+    By default, each plane uses the average values as constants for the features that 
+    aren't on the axis.
+    If the features parameter is specified, it will use those instead.
+    """
+    
+    if features is not None:
+         # Handle correctly sending status messages for socketio
+        status = 'classify-status'
+    else:
+         # Handle correctly sending status messages for socketio
+        status = 'retraining-status'
+
+    socketio.emit(status, {'message': 'Working on heatmaps...'})
+    print("Working on heatmaps...")
+
+
+    # Define axes features
+    x_features = ['mean radius', 'mean perimeter', 'mean area', 'mean texture', 'mean smoothness']
+    y_features = ['mean compactness', 'mean concavity', 'mean concave points', 'mean symmetry', 'mean fractal dimension']
+
+    # Find indices of the features
+    x_indices = [list(FEATURES).index(f) for f in x_features]
+    y_indices = [list(FEATURES).index(f) for f in y_features]
+
+
+    # Select matplotlib backend to allow for plot creation
+    use('agg')
+
+    # Generate pairwise plots
+    nrows, ncols = len(y_features), len(x_features)
+    cancer, axes = subplots(nrows, ncols, figsize=(15, 12), sharex='col', sharey='row')
+    grid_resolution = 100
+
+    # Create a grid of plots
+    for i, y_idx in enumerate(y_indices):
+        for j, x_idx in enumerate(x_indices):
+            
+            # Get feature ranges
+            x_min, x_max = data[:, x_idx].min(), data[:, x_idx].max()
+            y_min, y_max = data[:, y_idx].min(), data[:, y_idx].max()
+            x_range = np.linspace(x_min, x_max, grid_resolution)
+            y_range = np.linspace(y_min, y_max, grid_resolution)
+            
+            # Generate grid for the selected features
+            grid_x, grid_y = np.meshgrid(x_range, y_range)
+            grid_points = np.c_[grid_x.ravel(), grid_y.ravel()]
+
+            # Create a synthetic dataset with other features held constant
+            if features is not None:
+                X_const = np.full((grid_points.shape[0], data.shape[1]), features)
+                X_const[:, x_idx] = grid_points[:, 0]
+                X_const[:, y_idx] = grid_points[:, 1]
+            else:
+                X_const = np.full((grid_points.shape[0], data.shape[1]), data.mean(axis=0))
+                X_const[:, x_idx] = grid_points[:, 0]
+                X_const[:, y_idx] = grid_points[:, 1]
+
+            # Predict on the grid and reshape
+            Z = model.predict(X_const).reshape(grid_resolution, grid_resolution)
+        
+            # Plot heatmap
+            ax = axes[i, j]
+            c = heatmap(Z, cmap=["#e03434", "#21de5d"], ax=ax, cbar=False, vmin=0, vmax=1)
+
+            # Modify axes
+            ax.invert_yaxis()
+
+            # Set tick labels to actual feature ranges (instead of grid indices)
+            x_ticks = np.linspace(0, len(x_range) - 1, 5)
+            x_ticklabels = np.linspace(x_min, x_max, 5).round(2)
+            y_ticks = np.linspace(0, len(y_range) - 1, 5)
+            y_ticklabels = np.linspace(y_min, y_max, 5).round(2)
+            ax.set_xticks(x_ticks)
+            ax.set_xticklabels(x_ticklabels, rotation=0)
+            ax.set_yticks(y_ticks)
+            ax.set_yticklabels(y_ticklabels, rotation=0)
+
+            # Set axis titles
+            if i == nrows - 1:
+                ax.set_xlabel(x_features[j])
+            if j == 0:
+                ax.set_ylabel(y_features[i])
+
+            # Create legend (on top right subplot)
+            if i == 0 and j == ncols - 1:
+                legend_labels = [Patch(color="#e03434", label="Malignant"),
+                                Patch(color="#21de5d", label="Benign")]
+                axes[0, nrows-1].legend(handles=legend_labels, loc="upper right")
+
+            # Highight inputted cancer features from web form
+            if features is not None:
+                highlight_x, highlight_y = features[x_idx], features[y_idx]
+
+                # Ensure features are in bounds
+                if x_min <= highlight_x <= x_max and y_min <= highlight_y <= y_max:
+                    # Map to grid indices
+                    highlight_x_idx = int((highlight_x - x_min) / (x_max - x_min) * (len(x_range) - 1))
+                    highlight_y_idx = int((highlight_y - y_min) / (y_max - y_min) * (len(y_range) - 1))
+
+                    # Add rectangle to highlight the point
+                    rect = Rectangle((highlight_x_idx - 0.5, highlight_y_idx - 0.5), 1, 1, 
+                                    linewidth=2, edgecolor='#e399f2', facecolor='none')
+                    ax.add_patch(rect)
+
+                    # Add label
+                    ax.text(highlight_x_idx, highlight_y_idx - 5, 'Your cell', color='#e399f2', 
+                            ha='center', va='center', fontsize=10)
+                else:
+                    # Indicate the point is out of bounds
+                    ax.text(len(x_range) // 2, len(y_range) // 2, 'Tumor cell outside plot', 
+                            color='#e399f2', ha='center', va='center', fontsize=10)
+
+    # Save Plot
+    if features is not None:
+        suptitle("Model Predictions with Given Feature Values", fontsize=16)
+        tight_layout()
+
+        cancer_path = 'img/this_cancer.png'
+        cancer.get_figure().savefig(f'classifier/static/{cancer_path}')
+    else:
+        suptitle("Model Predictions with Average Feature Values", fontsize=16)
+        tight_layout()
+
+        cancer_path = 'img/cancer_knn_new.png'
+        cancer.get_figure().savefig(f'classifier/static/{cancer_path}')
+    
+    clf() # clear figure to create next plot
+
+    ### NOTE: Look into using BytesIO and base64 for sending heatmaps to server
+    socketio.emit('retraining-status', {'message': 'Created plots!'})
+    print('Created plots!')
+
+    return [cancer_path]

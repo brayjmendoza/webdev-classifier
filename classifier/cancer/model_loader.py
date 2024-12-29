@@ -4,7 +4,7 @@ from joblib import load
 
 #### CONSTANTS ####
 TEST_PERCENT = 0.2
-BEST_K = 9      # best k for knn model taken from previous cross-validation
+BEST_K = 15      # best k for knn model taken from previous cross-validation
 BEST_DEPTH = 3  # best depth for dtree model taken from previous cross-validation
 
 def load_knn_model():

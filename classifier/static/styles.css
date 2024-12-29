@@ -323,7 +323,7 @@ input:checked + .slider:before {
 }
 
 .classify-plot-image img {
-    width: 100%;
+    width: 80%;
 }
 
 /* CORRECTIONS FORM */

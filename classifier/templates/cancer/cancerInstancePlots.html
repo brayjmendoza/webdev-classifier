@@ -1,0 +1,9 @@
+<!-- Heatmap visualizations for a prediction with given features -->
+{% if instancePlotExists %} <!-- Only display if there is a plot -->
+  <h3 class="classify-plot-header">Visualization of Classification Planes</h3>
+  <div class="classify-plot">
+    <div class="classify-plot-image">
+      <img src="{{ url_for('static', filename='img/this_cancer.png') }}">
+    </div>
+  </div>
+{% endif %}

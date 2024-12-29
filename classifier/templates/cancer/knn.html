@@ -32,12 +32,11 @@
   <div class="plots">
     <div class="base-plots">
       <h2 class="plot-header">Base Model</h2>
-      <img src="{{ url_for('static', filename='img/iris_knn_sepal.png') }}" class="plot-images">
-      <img src="{{ url_for('static', filename='img/iris_knn_petal.png') }}" class="plot-images">
+      <img src="{{ url_for('static', filename='img/cancer_knn.png') }}" class="plot-images">
     </div>
 
     <div id="retrainPlots" class="retrain-plots">
-      {% include 'iris/irisRetrainPlots.html' %}
+      {% include 'cancer/cancerRetrainPlots.html' %}
     </div>
   </div>
 
