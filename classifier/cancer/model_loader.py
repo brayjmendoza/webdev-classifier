@@ -19,17 +19,17 @@ def load_knn_model():
 
     return load(path)
 
-# def load_dtree_model():
-#     """Load the iris dtree model"""
-#     path="classifier/models/iris/dtree.pkl"
+def load_dtree_model():
+    """Load the cancer dtree model"""
+    path="classifier/models/cancer/dtree.pkl"
 
-#     # Use retrained model if it exists
-#     if exists("classifier/models/iris/dtree_new.pkl"):
-#         path = 'classifier/models/iris/dtree_new.pkl'
+    # Use retrained model if it exists
+    if exists("classifier/models/cancer/dtree_new.pkl"):
+        path = 'classifier/models/cancer/dtree_new.pkl'
 
-#     print(f"Using model: {path}")
+    print(f"Using model: {path}")
 
-#     return load(path)
+    return load(path)
 
 # def load_mlp_model():
 #     """Load the iris mlp classifier"""

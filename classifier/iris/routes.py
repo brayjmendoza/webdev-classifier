@@ -207,7 +207,7 @@ def dtree_predict():
     socketio.emit('classify-status', {'message': 'Loading model...'})
     print('Loading model...')
     sleep(0.1)
-    dtree = model_loader.load_dtree_model()  # k nearest neighbors model from hw5
+    dtree = model_loader.load_dtree_model() # dtree model from hw6
     socketio.emit('classify-status', {'message': 'Loaded!'})
     print('Loaded!')
 
@@ -360,7 +360,7 @@ def mlp_predict():
     socketio.emit('classify-status', {'message': 'Loading model...'})
     print('Loading model...')
     sleep(0.1)
-    mlp = model_loader.load_mlp_model()  # k nearest neighbors model from hw5
+    mlp = model_loader.load_mlp_model()
     socketio.emit('classify-status', {'message': 'Loaded!'})
     print('Loaded!')
 

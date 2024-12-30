@@ -138,7 +138,7 @@ def knn_retrain_and_visualize():
     # Create plots for visualization
     image_paths = heatmap_visualization(new_model, features)
 
-    return render_template('iris/irisRetrainPlots.html', images = image_paths)
+    return render_template('cancer/cancerRetrainPlots.html', images = image_paths)
 
 def knn_retrain(features, targets):
     """
@@ -184,6 +184,166 @@ def knn_retrain(features, targets):
 
 
 #####################
+## DTREE FUNCTIONS
+#####################
+@cancer_bp.route('/dtree', methods=['GET'])
+def dtree_classifier():
+    """View the page for the breast cancer decision tree classifier"""
+
+    clean_files(classify='cancer', model='dtree')
+
+    db = get_db()
+    corrections = db.execute(
+        "SELECT * "
+        "FROM cancer_data "
+        "WHERE model LIKE 'dtree'"
+    ).fetchall()
+
+    # Keep track if the model can be retrained or not
+    if os.path.exists('classifier/models/cancer/dtree_new.pkl'):
+        session['retrained'] = True
+    else:
+        session['retrained'] = False
+
+    return render_template('cancer/dtree.html', 
+                           corrections=corrections, 
+                           index=TARGET)
+
+@cancer_bp.route('/dtree/predict', methods=['POST'])
+def dtree_predict():
+    """
+    Make an iris species prediction using the decision tree.
+    
+    Also creates tree plot visualizations for the given features
+    submitted on the web form if specified on the web page
+    """
+    # Load model
+    socketio.emit('classify-status', {'message': 'Loading model...'})
+    print('Loading model...')
+    sleep(0.1)
+    dtree = model_loader.load_dtree_model()
+    socketio.emit('classify-status', {'message': 'Loaded!'})
+    print('Loaded!')
+
+    # Get data
+    socketio.emit('classify-status', {'message': 'Classifying...'})
+    data = request.json
+
+    # Determine if we need to plot
+    last_key = list(data.keys())[-1]
+    visualize = data.pop(last_key)
+
+    # Store data in session to display on form
+    session['cancer_features'] = data
+
+    # Make prediction
+    Features = np.asarray([data['radius'],
+                data['texture'],
+                data['perimeter'],
+                data['area'],
+                data['smoothness'],
+                data['compactness'],
+                data['concavity'],
+                data['concave_points'],
+                data['symmetry'],
+                data['fractal_dimension']],
+                dtype=float)
+
+    prediction = dtree.predict([Features])
+    prediction = int(round(prediction[0]))  # unpack the extra brackets
+    prediction = TARGET[prediction]  # change to string
+    
+    if visualize:
+        heatmap_visualization(dtree, get_all_data('dtree', 'classify-status')[0], Features)
+        return jsonify({"cell_type": prediction, 
+                        "images": render_template('cancer/cancerInstancePlots.html', 
+                                                    instancePlotExists=True)})
+    
+    return jsonify({"cell_type": prediction})
+
+@cancer_bp.route('/dtree/retrain_and_visualize', methods=['POST'])
+def dtree_retrain_and_visualize():
+    """
+    Retrains a dtree model and creates a tree plot to visualize it
+
+    Takes all original iris data and all corrections for the dtree model
+    to retrain it
+    """
+    session['retrained'] = True
+
+    # Get data
+    features, targets = get_all_data('dtree')
+
+    # Retrain model
+    new_model = dtree_retrain(features, targets)
+
+    # Create plots for visualization
+    image_path = dtree_visualization(new_model)
+
+    return render_template('iris/irisRetrainPlots.html', images=image_path)
+
+def dtree_retrain(features, targets):
+    from numpy.random import permutation
+    from sklearn.tree import DecisionTreeClassifier
+    from joblib import dump
+
+    # Scramble data to remove (potential) dependence on ordering
+    indices = permutation(len(targets))
+    features = features[indices]
+    targets = targets[indices]
+
+    ##### Since the dataset is small, we will use all data
+    # Define training and testing sets
+    # from sklearn.model_selection import train_test_split
+    # X_train, X_test, y_train, y_test = train_test_split(all_features, 
+    #                                                     all_targets, 
+    #                                                     test_size=model_loader.TEST_PERCENT)
+    
+    
+    # Train new model
+    socketio.emit('retraining-status', {'message': 'Retraining model...'})
+    print("Retraining model...")
+    new_dtree_model = DecisionTreeClassifier(max_depth=model_loader.BEST_DEPTH)
+    new_dtree_model.fit(features, targets)
+    socketio.emit('retraining-status', {'message': 'Trained!'})
+    print("Trained!")
+    
+    # Save new model
+    socketio.emit('retraining-status', {'message': 'Saving retrained model...'})
+    print("Saving retrained model...")
+    dump(new_dtree_model, 'classifier/models/iris/dtree_new.pkl')
+    socketio.emit('retraining-status', {'message': 'Saved!'})
+    print("Saved!")
+
+    return new_dtree_model
+
+def dtree_visualization(model):
+    from sklearn.tree import plot_tree
+    from matplotlib.pyplot import figure, clf
+    from matplotlib import use
+
+    use('agg')
+
+    socketio.emit('retraining-status', {'message': 'Creating plot...'})
+    print('Creating plot...')
+
+    fig = figure(figsize=(10,10))
+    plot_tree(model, feature_names=FEATURES,
+                class_names=TARGET,
+                filled=True)
+    
+    # Save figure
+    filename = "img/iris_dtree.png"
+    fig.savefig(f'classifier/static/{filename}', bbox_inches='tight')
+    clf()
+
+    socketio.emit('retraining-status', {'message': 'Created plot!'})
+    print('Created plot!')
+
+    return [filename]
+
+
+#####################
 ## GENERAL FUNCTIONS
 #####################
 
@@ -195,7 +355,7 @@ def incorrect():
     Stores the corrections in the database (with model specified) and
     updates the corrections list seen on the web page.
     """
-    # Get species index
+    # Get target indices (malignant, benign)
     data = request.json
     cell_type = TARGET_INDEX[data['correction']]
 
