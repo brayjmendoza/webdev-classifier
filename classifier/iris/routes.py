@@ -327,7 +327,7 @@ def dtree_visualization(model):
 ###################
 @iris_bp.route('/mlp', methods=['GET'])
 def mlp_classifier():
-    """View the page for the decision tree iris classifier"""
+    """View the page for the multilayer perceptron iris classifier"""
 
     clean_files(classify='iris', model='mlp')
 
@@ -351,16 +351,16 @@ def mlp_classifier():
 @iris_bp.route('/mlp/predict', methods=['POST'])
 def mlp_predict():
     """
-    Make an iris species prediction using the decision tree.
+    Make an iris species prediction using the multilayer perceptron.
     
-    Also creates tree plot visualizations for the given features
+    Also creates heatmap visualizations for the given features
     submitted on the web form if specified on the web page
     """
     # Load model
     socketio.emit('classify-status', {'message': 'Loading model...'})
     print('Loading model...')
     sleep(0.1)
-    mlp = model_loader.load_mlp_model()
+    mlp = model_loader.load_mlp_model() # from hw7
     socketio.emit('classify-status', {'message': 'Loaded!'})
     print('Loaded!')
 
@@ -399,9 +399,9 @@ def mlp_predict():
 @iris_bp.route('/mlp/retrain_and_visualize', methods=['POST'])
 def mlp_retrain_and_visualize():
     """
-    Retrains a dtree model and creates a tree plot to visualize it
+    Retrains an mlp model and creates heatmaps to visualize it
 
-    Takes all original iris data and all corrections for the dtree model
+    Takes all original iris data and all corrections for the mlp model
     to retrain it
     """
     session['retrained'] = True

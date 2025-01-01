@@ -212,7 +212,7 @@ def dtree_classifier():
 @cancer_bp.route('/dtree/predict', methods=['POST'])
 def dtree_predict():
     """
-    Make an iris species prediction using the decision tree.
+    Make a breast cancer prediction using the decision tree.
     
     Also creates tree plot visualizations for the given features
     submitted on the web form if specified on the web page
@@ -266,13 +266,13 @@ def dtree_retrain_and_visualize():
     """
     Retrains a dtree model and creates a tree plot to visualize it
 
-    Takes all original iris data and all corrections for the dtree model
+    Takes all original cancer data and all corrections for the dtree model
     to retrain it
     """
     session['retrained'] = True
 
     # Get data
-    features, targets = get_all_data('dtree')
+    features, targets = get_all_data('dtree', 'retraining-status')
 
     # Retrain model
     new_model = dtree_retrain(features, targets)
@@ -280,7 +280,7 @@ def dtree_retrain_and_visualize():
     # Create plots for visualization
     image_path = dtree_visualization(new_model)
 
-    return render_template('iris/irisRetrainPlots.html', images=image_path)
+    return render_template('cancer/cancerRetrainPlots.html', images=image_path)
 
 def dtree_retrain(features, targets):
     from numpy.random import permutation
@@ -290,15 +290,7 @@ def dtree_retrain(features, targets):
     # Scramble data to remove (potential) dependence on ordering
     indices = permutation(len(targets))
     features = features[indices]
-    targets = targets[indices]
-
-    ##### Since the dataset is small, we will use all data
-    # Define training and testing sets
-    # from sklearn.model_selection import train_test_split
-    # X_train, X_test, y_train, y_test = train_test_split(all_features, 
-    #                                                     all_targets, 
-    #                                                     test_size=model_loader.TEST_PERCENT)
-    
+    targets = targets[indices]    
     
     # Train new model
     socketio.emit('retraining-status', {'message': 'Retraining model...'})
@@ -311,7 +303,7 @@ def dtree_retrain(features, targets):
     # Save new model
     socketio.emit('retraining-status', {'message': 'Saving retrained model...'})
     print("Saving retrained model...")
-    dump(new_dtree_model, 'classifier/models/iris/dtree_new.pkl')
+    dump(new_dtree_model, 'classifier/models/cancer/dtree_new.pkl')
     socketio.emit('retraining-status', {'message': 'Saved!'})
     print("Saved!")
 
@@ -327,13 +319,13 @@ def dtree_visualization(model):
     socketio.emit('retraining-status', {'message': 'Creating plot...'})
     print('Creating plot...')
 
-    fig = figure(figsize=(10,10))
+    fig = figure(figsize=(25,20))
     plot_tree(model, feature_names=FEATURES,
                 class_names=TARGET,
                 filled=True)
     
     # Save figure
-    filename = "img/iris_dtree.png"
+    filename = "img/cancer_dtree.png"
     fig.savefig(f'classifier/static/{filename}', bbox_inches='tight')
     clf()
 
@@ -341,6 +333,155 @@ def dtree_visualization(model):
     print('Created plot!')
 
     return [filename]
+
+
+###################
+### MLP FUNCIONS
+###################
+@cancer_bp.route('/mlp', methods=['GET'])
+def mlp_classifier():
+    """View the page for the multilayer perceptron breast cancer classifier"""
+
+    clean_files(classify='cancer', model='mlp')
+
+    db = get_db()
+    corrections = db.execute(
+        "SELECT * "
+        "FROM cancer_data "
+        "WHERE model LIKE 'mlp'"
+    ).fetchall()
+
+    # Keep track if the model can be retrained or not
+    if os.path.exists('classifier/models/cancer/mlp_new.pkl'):
+        session['retrained'] = True
+    else:
+        session['retrained'] = False
+
+    return render_template('cancer/mlp.html', 
+                           corrections=corrections, 
+                           index=TARGET)
+
+@cancer_bp.route('/mlp/predict', methods=['POST'])
+def mlp_predict():
+    """
+    Make an breast cancer prediction using the multilayer perceptron.
+    
+    Also creates a heatmap visualization for the given features
+    submitted on the web form if specified on the web page
+    """
+    # Load model
+    socketio.emit('classify-status', {'message': 'Loading model...'})
+    print('Loading model...')
+    sleep(0.1)
+    mlp = model_loader.load_mlp_model()
+    socketio.emit('classify-status', {'message': 'Loaded!'})
+    print('Loaded!')
+
+    # Get data
+    socketio.emit('classify-status', {'message': 'Classifying...'})
+    data = request.json
+
+    # Determine if we need to plot
+    last_key = list(data.keys())[-1]
+    visualize = data.pop(last_key)
+
+    # Store data in session to display on form
+    session['cancer_features'] = data
+
+    # Make prediction
+    Features = np.asarray([data['radius'],
+                data['texture'],
+                data['perimeter'],
+                data['area'],
+                data['smoothness'],
+                data['compactness'],
+                data['concavity'],
+                data['concave_points'],
+                data['symmetry'],
+                data['fractal_dimension']],
+                dtype=float)
+
+    prediction = mlp.predict([Features])
+    prediction = int(round(prediction[0]))  # unpack the extra brackets
+    prediction = TARGET[prediction]  # change to string
+    
+    if visualize:
+        heatmap_visualization(mlp, get_all_data('mlp', 'classify-status')[0], Features)
+        return jsonify({"cell_type": prediction, 
+                        "images": render_template('cancer/cancerInstancePlots.html', 
+                                                    instancePlotExists=True)})
+    
+    return jsonify({"cell_type": prediction})
+
+
+@cancer_bp.route('/mlp/retrain_and_visualize', methods=['POST'])
+def mlp_retrain_and_visualize():
+    """
+    Retrains an mlp model and creates a heatmap to visualize it
+
+    Takes all original breast cancer data and all corrections for the mlp model
+    to retrain it
+    """
+    session['retrained'] = True
+
+    # Get data
+    features, targets = get_all_data('mlp', 'retraining-status')
+
+    # Retrain model
+    new_model = mlp_retrain(features, targets)
+
+    # Create plots for visualization
+    image_path = heatmap_visualization(new_model, features)
+
+    return render_template('cancer/cancerRetrainPlots.html', images=image_path)
+
+def mlp_retrain(features, targets):
+    from numpy.random import permutation
+    from sklearn.neural_network import MLPClassifier
+    from sklearn.preprocessing import StandardScaler
+    from joblib import dump
+
+    # Scramble data to remove (potential) dependence on ordering
+    indices = permutation(len(targets))
+    features = features[indices]
+    targets = targets[indices]
+
+    # Define training and testing sets
+    from sklearn.model_selection import train_test_split
+    X_train, X_test, y_train, y_test = train_test_split(features, 
+                                                        targets, 
+                                                        test_size=model_loader.TEST_PERCENT)
+    
+    # Scale data
+    socketio.emit('retraining-status', {'message': 'Scaling data...'})
+    print("Scaling data...")
+    scaler = StandardScaler()
+    scaler.fit(X_train)
+    X_train_scaled = scaler.transform(X_train)
+    
+    # Train new model
+    socketio.emit('retraining-status', {'message': 'Retraining model...'})
+    print("Retraining model...")
+
+    # Same settings as base model
+    new_mlp_model = MLPClassifier(hidden_layer_sizes=(6,7),
+                                  max_iter=500,
+                                  shuffle=True,
+                                  learning_rate_init=1,
+                                  learning_rate='adaptive')
+    
+    new_mlp_model.fit(X_train_scaled, y_train)
+    socketio.emit('retraining-status', {'message': 'Trained!'})
+    print("Trained!")
+    
+    # Save new model
+    socketio.emit('retraining-status', {'message': 'Saving retrained model...'})
+    print("Saving retrained model...")
+    dump(new_mlp_model, 'classifier/models/cancer/mlp_new.pkl')
+    socketio.emit('retraining-status', {'message': 'Saved!'})
+    print("Saved!")
+
+    return new_mlp_model
 
 
 #####################
@@ -472,8 +613,11 @@ def get_all_data(model, status):
     new_targets = np.array(new_targets, dtype='float64')
     new_targets = np.reshape(new_targets, -1)  # convert to 1D array
 
-    # Combine all features and target data
-    all_features = np.concatenate((feature_data, new_features))
+    ### Combine all features and target data
+    #
+    # if there's no new features, all_features is just feature_data
+    # NOTE: trying to concatenate when there are no new features gives an error
+    all_features = np.concatenate((feature_data, new_features)) if new_features.size != 0 else feature_data
     all_targets = np.concatenate((target_data, new_targets))
 
     socketio.emit(status, {'message': 'Obtained all data!'})

@@ -1,0 +1,51 @@
+{% extends 'cancer/cancerBase.html' %}
+
+{% block subtitle %}
+  - Multi-Layer Perceptron
+{% endblock %}
+
+{% block subcontent %}
+
+  {% include 'cancer/cancerForm.html' %}
+
+  <!-- Retrain Button -->
+  <div class="retraining">
+    <button id="retrainButton" class ="retrain-button" type="button">
+      Retrain with Corrections
+    </button>
+  
+    <p id="retrainStatus" class="retrain-status"></p>
+  </div>
+
+  {% if session['retrained'] or not corrections %}
+  <!-- For displaying retrain button -->
+    <script>
+        document.getElementById('retrainButton').style.display = 'none';
+    </script>
+  {% endif %}
+  
+  <div id="correctionsPage" class="corrections-page">
+    {% include 'cancer/corrections.html' %}
+  </div>
+
+  <h2 class="visualize-header">Model Visualization</h2>
+  <div class="plots">
+    <div class="base-plots">
+      <h2 class="plot-header">Base Model</h2>
+      <img src="{{ url_for('static', filename='img/cancer_mlp.png') }}" class="plot-images">
+    </div>
+
+    <div id="retrainPlots" class="retrain-plots">
+      {% include 'cancer/cancerRetrainPlots.html' %}
+    </div>
+  </div>
+
+{% endblock %}
+{% block subjs %}
+  <script>
+    prediction('mlp');
+    correction('cancer', 'mlp')
+    retrain('cancer', 'mlp');
+    attachCorrectionListeners('cancer', 'mlp')
+  </script>
+{% endblock %}
