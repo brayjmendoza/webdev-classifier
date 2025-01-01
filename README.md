@@ -1,18 +1,18 @@
 # Overview
 This project combines web development with machine learning and data visualization.
 
-This is a Flask app that can classify a variety of different things. As of now, it can only classify different iris species. On the web application, you just have to input feature data and it will return a prediction based on a model. If it is incorrect, you can tell the program, so it can retrain when desired.
+This is a Flask app that can currently classify different iris species and whether cells from a breast tumor are cancerous or not. It does so with machine learning models. On the web application, you just have to input feature data and it will return a prediction based on a model. If it is incorrect, you can tell the program, so it can retrain when desired.
 
 This project was done for the NSF-funded research project, *Scripting For All*, by Professor Dodds of Harvey Mudd College. The overall goal of the research is to expand the understanding of computer science to disciplines that traditionally don't use it. Computation is becoming an increasingly useful and necessary skill, and we'd love to make it more accessible to everyone. This webdev-classifier project is an example of a final (albeit large) project that students should have the ability to do after taking HMC's CS35 *Computing for Insight* course.
 
 More information on the *Scripting For All* project can be found at [https://www.cs.hmc.edu/~dodds/cs35/nsf.html](https://www.cs.hmc.edu/~dodds/cs35/nsf.html)
 
 ## Classification
-For iris classification, the scikit-learn's iris dataset was used to train base models. As of now, there are three different classifiers: k-Nearest Neighbors, decision tree, multi-layer perceptron. More models can be easily added.
+For both iris and breast cancer classification, the scikit-learn's iris and breast cancer datasets were respectively used to train base models. As of now, there are three different classifiers: k-Nearest Neighbors, decision trees, and multi-layer perceptrons. More models can be easily added.
 
-In the future, I will continue to add additional models to classify the irises. I will also add different things to classify, such as digits and births. I will primarily be using popular datasets that people encounter when learning about data science and machine learning.
+Classifiers for different things can also be easily added. I primarily focus on popular datasets that people are likely to encounter when learning about data science and machine learning for the first time.
 
-The training for all of the initial models was done in initial_models.ipynb. That being said, some of the values for the iris models were done separately in a homework assignment from Harvey Mudd College's CS35 taught by Professor Dodds.
+The training for all of the initial models was done in initial_models.ipynb. That being said, some of the models for iris classification were done separately in a homework assignment from Harvey Mudd College's CS35 taught by Professor Dodds.
 
 ## Model Correction
 Models are never always correct. So, if the model makes a wrong prediction, you can correct it. The program will then store
@@ -32,7 +32,9 @@ I also have a number of utility commands for this project
 
 `reset-app` - Re-initalizes the database and cleans up all files created at runtime
 
-`reset-iris`- Clears the iris table in the database and cleans all iris-related files created a runtime
+`reset-iris`- Clears the iris table in the database and cleans all iris-related files created at runtime
+
+`reset-cancer` - Clears the breast cancer table in the database and cleans all breast cancer-related files created at runtime
 
 ## Running the Flask App
 First, install the necessary dependencies found in requirements.txt (either in a global or virtual environment). Then simply run the following command to run the flask app:
