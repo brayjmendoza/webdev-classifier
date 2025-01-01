@@ -14,6 +14,13 @@ def clear_iris():
     with current_app.open_resource('database/sql/iris.sql') as f:
         db.executescript(f.read().decode('utf8'))
 
+def clear_cancer():
+    """Clear exisiting iris table and recreate it"""
+    db = get_db()
+
+    with current_app.open_resource('database/sql/cancer.sql') as f:
+        db.executescript(f.read().decode('utf8'))
+
 
 def clean_files(classify = None, model = None):
     """
@@ -81,7 +88,36 @@ def reset_iris_command():
     # Delete any iris model visualization aside from default plots
     plots = list(os.walk('classifier/static/img'))[0][2]
     for plot in plots:
-        if 'iris' and 'new' in plot:
+        if 'iris' in plot and 'new' in plot:
+            os.remove(f'classifier/static/img/{plot}')
+        if 'iris' in plot and 'this' in plot:
+            os.remove(f'classifier/static/img/{plot}')
+    click.echo("Removed visualization plots.")
+
+
+@click.command('reset-cancer')
+def reset_cancer_command():
+    """
+    Clear cancer database and cancer files as if the
+    cancer pages/models have never been touched
+    """
+    # Clear cancer table in database
+    clear_cancer()
+    click.echo('Reset cancer table.')
+
+    # Delete any retrained cancer models
+    models = list(os.walk('classifier/models/cancer'))[0][2]
+    for model in models:
+        if 'new' in model:
+            os.remove(f'classifier/models/cancer/{model}')
+    click.echo("Removed visualization plots.")
+
+    # Delete any cancer model visualizations aside from default plots
+    plots = list(os.walk('classifier/static/img'))[0][2]
+    for plot in plots:
+        if 'cancer' in plot and 'new' in plot:
+            os.remove(f'classifier/static/img/{plot}')
+        if 'cancer' in plot and 'this' in plot:
             os.remove(f'classifier/static/img/{plot}')
     click.echo("Removed retrained model plots.")
 
@@ -108,5 +144,6 @@ def reset_app_command():
 def register_commands(app):
     """Register commands to app"""
     app.cli.add_command(reset_iris_command)
+    app.cli.add_command(reset_cancer_command)
     app.cli.add_command(clean_command)
     app.cli.add_command(reset_app_command)
