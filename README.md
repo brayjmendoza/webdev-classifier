@@ -5,6 +5,8 @@ This is a Flask app that can classify a variety of different things. As of now, 
 
 This project was done for an NSF-funded research project, *Scripting For All*, by Professor Dodds of Harvey Mudd College. The overall goal of the research is to expand the understanding of computer science to disciplines that traditionally don't use it. Computation is becoming an increasingly useful and necessary skill, and we'd love to make it more accessible to everyone. This webdev-classifier project is an example of a final (albeit large) project that students should have the ability to do after taking HMC's CS35 *Computing for Insight* course.
 
+More information on the *Scripting For All* project can be found at [https://www.cs.hmc.edu/~dodds/cs35/nsf.html](https://www.cs.hmc.edu/~dodds/cs35/nsf.html)
+
 ## Classification
 For iris classification, the scikit-learn's iris dataset was used to train base models. As of now, there are three different classifiers: k-Nearest Neighbors, decision tree, multi-layer perceptron. More models can be easily added.
 
