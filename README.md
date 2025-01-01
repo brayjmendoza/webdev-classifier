@@ -3,7 +3,7 @@ This project combines web development with machine learning and data visualizati
 
 This is a Flask app that can classify a variety of different things. As of now, it can only classify different iris species. On the web application, you just have to input feature data and it will return a prediction based on a model. If it is incorrect, you can tell the program, so it can retrain when desired.
 
-This project was done for an NSF-funded research project, *Scripting For All*, by Professor Dodds of Harvey Mudd College. The overall goal of the research is to expand the understanding of computer science to disciplines that traditionally don't use it. Computation is becoming an increasingly useful and necessary skill, and we'd love to make it more accessible to everyone. This webdev-classifier project is an example of a final (albeit large) project that students should have the ability to do after taking HMC's CS35 *Computing for Insight* course.
+This project was done for the NSF-funded research project, *Scripting For All*, by Professor Dodds of Harvey Mudd College. The overall goal of the research is to expand the understanding of computer science to disciplines that traditionally don't use it. Computation is becoming an increasingly useful and necessary skill, and we'd love to make it more accessible to everyone. This webdev-classifier project is an example of a final (albeit large) project that students should have the ability to do after taking HMC's CS35 *Computing for Insight* course.
 
 More information on the *Scripting For All* project can be found at [https://www.cs.hmc.edu/~dodds/cs35/nsf.html](https://www.cs.hmc.edu/~dodds/cs35/nsf.html)
 
