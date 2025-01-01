@@ -102,19 +102,30 @@ button:hover {
 }
 
 /* MODEL HOMEPAGE STYLES */
-.home-subheader {
+.about {
     margin-left: 10px;
+}
+
+.about-header {
     padding-top: 20px;
-    font-size: 1.8em;
+    font-size: 1.5em;
+}
+
+.about p {
+    padding-top: 3px;
+    padding-bottom: 3px;
+    padding-left: 15px;
+    margin-right: 200px;
 }
 
 .home-models {
     margin-left: 10px;
 }
 
-.home-models h2 {
+.home-models h1 {
     margin-bottom: 4px;
-    font-size: 1.5em;
+    padding-top: 20px;
+    font-size: 1.8em;
 }
 
 .home-models a {

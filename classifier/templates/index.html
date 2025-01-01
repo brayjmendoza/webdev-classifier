@@ -3,11 +3,20 @@
 {% block title %}Classifiers{% endblock %}
 
 {% block header %}
-  <h1 class="home-subheader">Welcome!</h1>
-
   <div class="home-models">
-    <h2>Classifiers:</h2>
+    <h1>Classifiers:</h1>
       <a href="{{ url_for('iris.iris') }}">Iris Classifiers</a>
       <a href="{{ url_for('cancer.cancer') }}">Breast Cancer Classifiers</a>
+  </div>
+  <div class="about">
+    <h2 class="about-header">About this project</h2>
+      <p>
+        This project was done for an NSF-funded research project, *Scripting For All*, by Professor Dodds 
+        of Harvey Mudd College. The overall goal of the research is to expand the understanding of computer 
+        science to disciplines that traditionally don't use it. Computation is becoming an increasingly useful 
+        and necessary skill, and we'd love to make it more accessible to everyone. This webdev-classifier project 
+        is an example of a final (albeit large) project that students should have the ability to do after taking 
+        HMC's CS35 *Computing for Insight* course.
+      </p>
   </div>
 {% endblock %}
